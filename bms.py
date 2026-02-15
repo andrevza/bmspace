@@ -898,7 +898,12 @@ def bms_getAnalogData(bms,batNumber):
             if print_initial:
                 print("Pack " + str(p) + ", I Full Capacity: " + str(i_full_cap[p-1]) + " mAh")
 
-            soc.append(round(i_remain_cap[p-1]/i_full_cap[p-1]*100,2))
+            if i_full_cap[p-1] > 0:
+                soc.append(round(i_remain_cap[p-1]/i_full_cap[p-1]*100,2))
+            else:
+                if debug_output > 0:
+                    print("Pack " + str(p) + ": i_full_cap is 0, forcing SOC to 0")
+                soc.append(0)
             client.publish(config['mqtt_base_topic'] + "/pack_" + str(p) + "/soc",str(soc[p-1]))
             if print_initial:
                 print("Pack " + str(p) + ", SOC: " + str(soc[p-1]) + " %")
@@ -915,7 +920,12 @@ def bms_getAnalogData(bms,batNumber):
             if print_initial:
                 print("Pack " + str(p) + ", Design Capacity: " + str(i_design_cap[p-1]) + " mAh")
 
-            soh.append(round(i_full_cap[p-1]/i_design_cap[p-1]*100,2))
+            if i_design_cap[p-1] > 0:
+                soh.append(round(i_full_cap[p-1]/i_design_cap[p-1]*100,2))
+            else:
+                if debug_output > 0:
+                    print("Pack " + str(p) + ": i_design_cap is 0, forcing SOH to 0")
+                soh.append(0)
             client.publish(config['mqtt_base_topic'] + "/pack_" + str(p) + "/soh",str(soh[p-1]))
             if print_initial:
                 print("Pack " + str(p) + ", SOH: " + str(soh[p-1]) + " %")
@@ -964,12 +974,22 @@ def bms_getPackCapacity(bms):
         if print_initial:
             print("Pack Design Capacity: " + str(pack_design_cap) + " mAh")
 
-        pack_soc = round(pack_remain_cap/pack_full_cap*100,2)
+        if pack_full_cap > 0:
+            pack_soc = round(pack_remain_cap/pack_full_cap*100,2)
+        else:
+            if debug_output > 0:
+                print("Pack full capacity is 0, forcing pack SOC to 0")
+            pack_soc = 0
         client.publish(config['mqtt_base_topic'] + "/pack_soc",str(pack_soc))
         if print_initial:
             print("Pack SOC: " + str(pack_soc) + " %")
 
-        pack_soh = round(pack_full_cap/pack_design_cap*100,2)
+        if pack_design_cap > 0:
+            pack_soh = round(pack_full_cap/pack_design_cap*100,2)
+        else:
+            if debug_output > 0:
+                print("Pack design capacity is 0, forcing pack SOH to 0")
+            pack_soh = 0
         client.publish(config['mqtt_base_topic'] + "/pack_soh",str(pack_soh))
         if print_initial:
             print("Pack SOH: " + str(pack_soh) + " %")
