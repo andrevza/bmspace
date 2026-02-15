@@ -462,6 +462,8 @@ def ha_discovery():
             disc_payload['unit_of_measurement'] = "%"
             client.publish(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
 
+        print("Finished - Publishing HA Discovery topic")
+
     else:
         print("HA Discovery Disabled")
 
@@ -822,7 +824,7 @@ def bms_getAnalogData(bms,batNumber):
 
             cells = int(inc_data[byte_index:byte_index+2],16)
 
-            #Possible remove this next test as were now testing for the INFOFLAG at the end
+            #TODO: Possible remove this next test as were now testing for the INFOFLAG at the end
             if p > 1:
                 if cells != cells_prev:
                     byte_index += 2
