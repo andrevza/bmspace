@@ -726,7 +726,7 @@ def bms_getVersion(comms):
 
     global bms_version
 
-    success, INFO = bms_request(bms,cid2=constants.cid2SoftwareVersion)
+    success, INFO = bms_request(comms,cid2=constants.cid2SoftwareVersion)
 
     if success == False:
         return(False,INFO)
@@ -746,7 +746,7 @@ def bms_getSerial(comms):
     global bms_sn
     global pack_sn
 
-    success, INFO = bms_request(bms,cid2=constants.cid2SerialNumber)
+    success, INFO = bms_request(comms,cid2=constants.cid2SerialNumber)
 
     if success == False:
         print("Error: " + INFO)
