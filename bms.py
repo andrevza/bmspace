@@ -708,19 +708,34 @@ def bms_request(bms, ver=b"\x32\x35",adr=b"\x30\x31",cid1=b"\x34\x36",cid2=b"\x4
     return(success, INFO)
 
 def bms_getPackNumber(bms):
+    # Some PACE stacks only report local pack for CID2=0x90 unless broadcast ADR is used.
+    # Try broadcast/system addresses first, then fall back to analog-all data parsing.
+    for adr in (b"FF", b"00", b"01"):
+        success, INFO = bms_request(bms,adr=adr,cid2=constants.cid2PackNumber)
+        if success != False:
+            try:
+                packNumber = int(INFO,16)
+                if debug_output > 0:
+                    print("Total battery packs reported via CID2=0x90 ADR " + adr.decode("ascii") + ": " + str(packNumber))
+                if packNumber > 1:
+                    return(True,packNumber)
+            except Exception:
+                if debug_output > 0:
+                    print("Error extracting total battery count in pack for ADR " + adr.decode("ascii"))
 
-    success, INFO = bms_request(bms,cid2=constants.cid2PackNumber)
-
+    # Fallback: CID2=0x42 (analog) with INFO=FF includes total pack count in payload.
+    success, inc_data = bms_request(bms,adr=b"FF",cid2=constants.cid2PackAnalogData,info=b"FF")
     if success == False:
-        return(False,INFO)    
+        return(False,inc_data)
 
     try:
-        packNumber = int(INFO,16)
-    except:
-        print("Error extracting total battery count in pack")
-        return(False,"Error extracting total battery count in pack")
-
-    return(success,packNumber)
+        packNumber = int(inc_data[2:4],16)
+        if debug_output > 0:
+            print("Total battery packs reported via CID2=0x42 fallback: " + str(packNumber))
+        return(True,packNumber)
+    except Exception:
+        print("Error extracting total battery count from analog fallback response")
+        return(False,"Error extracting total battery count from analog fallback response")
 
 def bms_getVersion(comms):
 
