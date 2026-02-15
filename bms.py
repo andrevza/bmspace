@@ -32,6 +32,7 @@ scan_interval = config['scan_interval']
 connection_type = config['connection_type']
 bms_serial = config['bms_serial']
 ha_discovery_enabled = config['mqtt_ha_discovery']
+# Retry values are optional in config; defaults keep backward compatibility.
 bms_connect_retries = max(1, int(config.get('bms_connect_retries', 5)))
 bms_connect_retry_delay = max(1, int(config.get('bms_connect_retry_delay', 5)))
 code_running = True
@@ -48,6 +49,8 @@ pack_sn = ''
 packs = 1
 cells = 13
 temps = 6
+# Persistent TCP receive buffer for partial/combined socket frames.
+tcp_rx_buffer = b""
 
 
 print("Connection Type: " + connection_type)
@@ -72,6 +75,7 @@ client.on_disconnect = on_disconnect
 client.username_pw_set(username=config['mqtt_user'], password=config['mqtt_password'])
 
 def mqtt_connect():
+    # Wrapper used by startup and reconnect loop to keep connect error handling in one place.
     global mqtt_connected
     try:
         client.connect(config['mqtt_host'], config['mqtt_port'], 60)
@@ -129,6 +133,7 @@ def bms_connect(address, port):
             return False, False
 
 def bms_connect_with_retries(address, port, max_attempts=None, retry_delay=None):
+    # BMS links can be noisy on boot; retry before giving up.
     if max_attempts is None:
         max_attempts = bms_connect_retries
     if retry_delay is None:
@@ -172,22 +177,52 @@ def bms_sendData(comms,request=''):
             return False
 
 def bms_get_data(comms):
+    global tcp_rx_buffer
     try:
         if connection_type == "Serial":
             inc_data = comms.readline()
         else:
-            temp = comms.recv(4096)
-            temp2 = temp.split(b'\r')
-            # Decide which one to take:
-            for element in range(0,len(temp2)):
-                SOI = hex(ord(temp2[element][0:1]))
-                if SOI == '0x7e':
-                    inc_data = temp2[element] + b'\r'
-                    break
+            # Accumulate bytes until a full protocol frame (~ ... \r) is available.
+            deadline = time.monotonic() + 5
+            max_buffer_size = 16384
 
-            if (len(temp2) > 2) & (debug_output > 0):
-                print("Multiple EOIs detected")
-                print("...for incoming data: " + str(temp) + " |Hex: " + str(temp.hex(' ')))
+            while time.monotonic() < deadline:
+                soi_index = tcp_rx_buffer.find(b"\x7e")
+                if soi_index >= 0:
+                    eoi_index = tcp_rx_buffer.find(b"\x0d", soi_index + 1)
+                    if eoi_index >= 0:
+                        # Drop any noise before SOI so parsing stays aligned.
+                        if (soi_index > 0) and (debug_output > 0):
+                            dropped = tcp_rx_buffer[:soi_index]
+                            print("Discarding preamble bytes: " + str(dropped) + " |Hex: " + str(dropped.hex(" ")))
+                        inc_data = tcp_rx_buffer[soi_index:eoi_index + 1]
+                        tcp_rx_buffer = tcp_rx_buffer[eoi_index + 1:]
+                        return inc_data
+                elif len(tcp_rx_buffer) > max_buffer_size:
+                    if debug_output > 0:
+                        print("RX buffer overflow without SOI; clearing stale data")
+                    tcp_rx_buffer = b""
+
+                try:
+                    temp = comms.recv(4096)
+                    if len(temp) == 0:
+                        raise ConnectionError("Socket closed by remote host")
+                    tcp_rx_buffer += temp
+                except socket.timeout:
+                    # Keep waiting until deadline; higher-level logic decides on retries.
+                    continue
+
+                if len(tcp_rx_buffer) > max_buffer_size:
+                    if debug_output > 0:
+                        print("RX buffer exceeded max size; trimming stale data")
+                    keep_from = tcp_rx_buffer.rfind(b"\x7e")
+                    if keep_from >= 0:
+                        tcp_rx_buffer = tcp_rx_buffer[keep_from:]
+                    else:
+                        tcp_rx_buffer = b""
+
+            print("BMS socket receive timeout waiting for full frame")
+            return False
         return inc_data
     except Exception as e:
         print("BMS socket receive error: %s" % e)
@@ -1121,6 +1156,7 @@ def bms_getWarnInfo(bms):
 print("Connecting to BMS...")
 bms,bms_connected = bms_connect_with_retries(config['bms_ip'],config['bms_port'])
 if bms_connected != True:
+    # Startup cannot continue without BMS transport.
     sys.exit("Unable to connect to BMS after retries, exiting")
 
 client.publish(config['mqtt_base_topic'] + "/availability","offline")
