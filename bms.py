@@ -540,8 +540,8 @@ def bms_parse_data(inc_data):
         RTN = inc_data[7:9]
         error, info = cid2_rtn(RTN)
         if error:
-            print(error)
-            raise Exception(error)
+            print(info)
+            raise Exception(info)
         
         LCHKSUM = inc_data[9]
 
