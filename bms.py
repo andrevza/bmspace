@@ -716,6 +716,8 @@ def bms_getPackNumber(bms):
                 packNumber = int(INFO,16)
                 if debug_output > 0:
                     print("Total battery packs reported via CID2=0x90 ADR " + adr.decode("ascii") + ": " + str(packNumber))
+                # Return immediately when a multi-pack count is reported.
+                # If not, keep probing/fallback because some units only return local-pack style values here.
                 if packNumber > 1:
                     return(True,packNumber)
             except Exception:
