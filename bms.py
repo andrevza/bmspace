@@ -997,10 +997,10 @@ def bms_getWarnInfo(bms):
 
         packsW = int(inc_data[byte_index:byte_index+2],16)
         if print_initial:
-            print("Packs for warnings: " + str(packs))
+            print("Packs for warnings: " + str(packsW))
         byte_index += 2
 
-        for p in range(1,packs+1):
+        for p in range(1,packsW+1):
 
             cellsW = int(inc_data[byte_index:byte_index+2],16)
             byte_index += 2
