@@ -1222,8 +1222,8 @@ while code_running == True:
     if bms_connected == True:
         if mqtt_connected == True:
 
-            success, data = bms_getAnalogData(bms,batNumber=255)
-            if success != True:
+            analog_success, data = bms_getAnalogData(bms,batNumber=255)
+            if analog_success != True:
                 print("Error retrieving BMS analog data: " + data)
             time.sleep(scan_interval/3)
             success, data = bms_getPackCapacity(bms)
@@ -1235,7 +1235,9 @@ while code_running == True:
                 print("Error retrieving BMS warning info: " + data)
             time.sleep(scan_interval/3)
 
-            if print_initial:
+            # Only publish discovery after a valid analog frame, so HA entities match real pack/cell data
+            # and we avoid creating incomplete entities when multi-pack parsing fails in that cycle.
+            if print_initial and analog_success:
                 ha_discovery()
                 
             client.publish(config['mqtt_base_topic'] + "/availability","online")
