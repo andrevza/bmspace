@@ -249,11 +249,12 @@ def ha_discovery():
             disc_payload['unit_of_measurement'] = "%"
             client.publish(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
 
-            disc_payload['name'] = "Pack " + str(p) + " State of Health"
-            disc_payload['unique_id'] = "bmspace_" + bms_sn + "_pack_" + str(p) + "_soh"
-            disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_" + str(p) + "/soh"
-            disc_payload['unit_of_measurement'] = "%"
-            client.publish(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
+            # TODO: Duplicate entry - Check and remove if so.
+            # disc_payload['name'] = "Pack " + str(p) + " State of Health"
+            # disc_payload['unique_id'] = "bmspace_" + bms_sn + "_pack_" + str(p) + "_soh"
+            # disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_" + str(p) + "/soh"
+            # disc_payload['unit_of_measurement'] = "%"
+            # client.publish(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
 
 
             disc_payload.pop('unit_of_measurement')
