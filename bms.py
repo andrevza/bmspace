@@ -32,6 +32,8 @@ scan_interval = config['scan_interval']
 connection_type = config['connection_type']
 bms_serial = config['bms_serial']
 ha_discovery_enabled = config['mqtt_ha_discovery']
+bms_connect_retries = max(1, int(config.get('bms_connect_retries', 5)))
+bms_connect_retry_delay = max(1, int(config.get('bms_connect_retry_delay', 5)))
 code_running = True
 bms_connected = False
 mqtt_connected = False
@@ -68,9 +70,30 @@ client.on_disconnect = on_disconnect
 #client.on_message = on_message
 
 client.username_pw_set(username=config['mqtt_user'], password=config['mqtt_password'])
-client.connect(config['mqtt_host'], config['mqtt_port'], 60)
-client.loop_start()
-time.sleep(2)
+
+def mqtt_connect():
+    global mqtt_connected
+    try:
+        client.connect(config['mqtt_host'], config['mqtt_port'], 60)
+        return True
+    except socket.timeout:
+        mqtt_connected = False
+        print("MQTT connect timeout to " + config['mqtt_host'] + ":" + str(config['mqtt_port']))
+        return False
+    except OSError as e:
+        mqtt_connected = False
+        print("MQTT socket error connecting: %s" % e)
+        return False
+    except Exception as e:
+        mqtt_connected = False
+        print("MQTT error connecting: %s" % e)
+        return False
+
+if mqtt_connect():
+    client.loop_start()
+    time.sleep(2)
+else:
+    print("MQTT not connected on startup, will retry...")
 
 def exit_handler():
     print("Script exiting")
@@ -104,6 +127,23 @@ def bms_connect(address, port):
         except OSError as msg:
             print("BMS socket error connecting: %s" % msg)
             return False, False
+
+def bms_connect_with_retries(address, port, max_attempts=None, retry_delay=None):
+    if max_attempts is None:
+        max_attempts = bms_connect_retries
+    if retry_delay is None:
+        retry_delay = bms_connect_retry_delay
+
+    for attempt in range(1, max_attempts + 1):
+        bms, connected = bms_connect(address, port)
+        if connected:
+            return bms, True
+        if attempt < max_attempts:
+            print("BMS connect attempt " + str(attempt) + "/" + str(max_attempts) + " failed, retrying in " + str(retry_delay) + "s...")
+            time.sleep(retry_delay)
+
+    print("BMS connect failed after " + str(max_attempts) + " attempts")
+    return False, False
 
 def bms_sendData(comms,request=''):
 
@@ -1079,7 +1119,9 @@ def bms_getWarnInfo(bms):
 
 
 print("Connecting to BMS...")
-bms,bms_connected = bms_connect(config['bms_ip'],config['bms_port'])
+bms,bms_connected = bms_connect_with_retries(config['bms_ip'],config['bms_port'])
+if bms_connected != True:
+    sys.exit("Unable to connect to BMS after retries, exiting")
 
 client.publish(config['mqtt_base_topic'] + "/availability","offline")
 print_initial = True
@@ -1137,13 +1179,15 @@ while code_running == True:
         else: #MQTT not connected
             client.loop_stop()
             print("MQTT disconnected, trying to reconnect...")
-            client.connect(config['mqtt_host'], config['mqtt_port'], 60)
-            client.loop_start()
+            if mqtt_connect():
+                client.loop_start()
             time.sleep(5)
             print_initial = True
     else: #BMS not connected
         print("BMS disconnected, trying to reconnect...")
-        bms,bms_connected = bms_connect(config['bms_ip'],config['bms_port'])
+        bms,bms_connected = bms_connect_with_retries(config['bms_ip'],config['bms_port'])
+        if bms_connected != True:
+            sys.exit("Unable to reconnect to BMS after retries, exiting")
         client.publish(config['mqtt_base_topic'] + "/availability","offline")
         time.sleep(5)
         print_initial = True
