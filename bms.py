@@ -57,7 +57,6 @@ print("Connection Type: " + connection_type)
 
 def on_connect(client, userdata, flags, rc):
     print("MQTT connected with result code "+str(rc))
-    client.will_set(config['mqtt_base_topic'] + "/availability","offline", qos=0, retain=False)
     global mqtt_connected
     mqtt_connected = True
 
@@ -72,6 +71,8 @@ client.on_connect = on_connect
 client.on_disconnect = on_disconnect
 #client.on_message = on_message
 
+# LWT must be set before connect() so broker can register it for unexpected disconnects.
+client.will_set(config['mqtt_base_topic'] + "/availability","offline", qos=0, retain=False)
 client.username_pw_set(username=config['mqtt_user'], password=config['mqtt_password'])
 
 def mqtt_connect():
