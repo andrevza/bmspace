@@ -32,6 +32,9 @@ scan_interval = config['scan_interval']
 connection_type = config['connection_type']
 bms_serial = config['bms_serial']
 ha_discovery_enabled = config['mqtt_ha_discovery']
+# Optional tuning knob for installations where packet layout drifts between packs.
+# Default 0 keeps existing behavior.
+bms_force_pack_offset = int(config.get('force_pack_offset', 0))
 # Retry values are optional in config; defaults keep backward compatibility.
 bms_connect_retries = max(1, int(config.get('bms_connect_retries', 5)))
 bms_connect_retry_delay = max(1, int(config.get('bms_connect_retry_delay', 5)))
@@ -818,20 +821,9 @@ def bms_getAnalogData(bms,batNumber):
         t_cell = {}
 
         for p in range(1,packs+1):
-
-            if p > 1:
-                cells_prev = cells
-
+            # Each pack block starts with its cell-count marker.
+            # We read this marker first, then parse that many cell voltages.
             cells = int(inc_data[byte_index:byte_index+2],16)
-
-            #TODO: Possible remove this next test as were now testing for the INFOFLAG at the end
-            if p > 1:
-                if cells != cells_prev:
-                    byte_index += 2
-                    cells = int(inc_data[byte_index:byte_index+2],16)
-                    if cells != cells_prev:
-                        print("Error parsing BMS analog data: Cannot read multiple packs")
-                        return(False,"Error parsing BMS analog data: Cannot read multiple packs")
 
             if print_initial:
                 print("Pack " + str(p) + ", Total cells: " + str(cells))
@@ -949,9 +941,19 @@ def bms_getAnalogData(bms,batNumber):
 
             byte_index += 2
 
-            #Test for non signed value (matching cell count), to skip possible INFOFLAG present in data
-            if (byte_index < len(inc_data)) and (cells != int(inc_data[byte_index:byte_index+2],16)):
-                byte_index += 2
+            # Some BMS payloads include extra bytes between pack blocks.
+            # This offset allows manual correction without changing parser logic.
+            byte_index += bms_force_pack_offset
+
+            # Before parsing the next pack, realign byte_index to the next pack marker.
+            # We use the expected cell-count marker as an anchor and scan in 2-byte steps
+            # to skip INFOFLAG/extra words that may appear between packs.
+            if p < packs:
+                while (byte_index < len(inc_data)) and (cells != int(inc_data[byte_index:byte_index+2],16)):
+                    byte_index += 2
+                    if byte_index > len(inc_data):
+                        print("Error parsing BMS analog data: Cannot read multiple packs")
+                        return(False,"Error parsing BMS analog data: Cannot read multiple packs")
 
     except Exception as e:
         print("Error parsing BMS analog data: ", str(e))
