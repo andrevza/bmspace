@@ -1,5 +1,3 @@
-
-
 import paho.mqtt.client as mqtt
 import socket
 import time
@@ -7,8 +5,6 @@ import yaml
 import os
 import json
 import serial
-import io
-import json
 import atexit
 import sys
 import constants
