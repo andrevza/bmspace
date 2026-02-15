@@ -877,7 +877,7 @@ def bms_getAnalogData(bms,batNumber):
             i_pack.append(int(inc_data[byte_index:byte_index+4],16))
             byte_index += 4
             if i_pack[p-1] >= 32768:
-                i_pack[p-1] = -1*(65535 - i_pack[p-1])
+                i_pack[p-1] -= 65536
             i_pack[p-1] = i_pack[p-1]/100
             client.publish(config['mqtt_base_topic'] + "/pack_" + str(p) + "/i_pack",str(i_pack[p-1]))
             if print_initial:
