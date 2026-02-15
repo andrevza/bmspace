@@ -2,7 +2,7 @@ name: "BMS Pace - Development"
 description: "Pace BMS Interface"
 version: "2.3dev"
 slug: "bms_pace_dev"
-url: "https://github.com/Tertiush/bmspace/pace-bms-dev"
+url: "https://github.com/andrev/bmspace/pace-bms-dev"
 init: false
 arch:
   - aarch64
@@ -10,7 +10,6 @@ arch:
   - armhf
   - armv7
   - i386
-
 uart: true
 usb: true
 
