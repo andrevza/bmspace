@@ -742,7 +742,7 @@ def bms_getPackNumber(bms):
         print("Error extracting total battery count from analog fallback response")
         return(False,"Error extracting total battery count from analog fallback response")
 
-def bms_getVersion(comms):
+def bms_getVersion(comms, reported_packs=1):
 
     global bms_version
 
@@ -761,7 +761,7 @@ def bms_getVersion(comms):
 
     return(success,bms_version)
 
-def bms_getSerial(comms):
+def bms_getSerial(comms, reported_packs=1):
 
     global bms_sn
     global pack_sn
@@ -1202,24 +1202,25 @@ if bms_connected != True:
 client.publish(config['mqtt_base_topic'] + "/availability","offline")
 print_initial = True
 
-success, data = bms_getVersion(bms)
+# Use detected pack count to limit/guide per-pack ADR probes for version/serial.
+reported_packs = 1
+time.sleep(0.1)
+success, data = bms_getPackNumber(bms)
+if success == True:
+    reported_packs = data
+    print("Batteries in pack: ", data)
+else:
+    print("Error retrieving number of batteries in pack")
+
+success, data = bms_getVersion(bms, reported_packs)
 if success != True:
     print("Error retrieving BMS version number")
 
 time.sleep(0.1)
-success, bms_sn, pack_sn = bms_getSerial(bms)
+success, bms_sn, pack_sn = bms_getSerial(bms, reported_packs)
 if success != True:
     print("Error retrieving BMS and pack serial numbers. This is required for HA Discovery. Exiting...")
     quit()
-
-
-# Not used anymore
-# time.sleep(0.1)
-# success, data = bms_getPackNumber(bms)
-# if success == True:
-#     print("Batteries in pack: ", data)
-# else:
-#     print("Error retrieving number of batteries in pack")
 
 while code_running == True:
 
