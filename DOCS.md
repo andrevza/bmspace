@@ -28,12 +28,14 @@ Hostname or IP of the MQTT broker.
 
 ### Option: `mqtt_port`
 MQTT broker TCP port.
+Must be a valid port number (`1`-`65535`).
 
 ### Option: `mqtt_user`
 MQTT username.
 
 ### Option: `mqtt_password`
 MQTT password.
+In Home Assistant this uses a password field, so the value is masked in the UI.
 
 ### Option: `mqtt_ha_discovery`
 Enable Home Assistant MQTT discovery entity publishing.
@@ -55,6 +57,7 @@ BMS TCP bridge/server IP when `connection_type: IP`.
 
 ### Option: `bms_port`
 BMS TCP bridge/server port when `connection_type: IP`.
+Must be a valid port number (`1`-`65535`).
 
 ### Option: `bms_serial`
 Serial device path when `connection_type: Serial`.  

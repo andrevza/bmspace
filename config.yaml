@@ -33,19 +33,19 @@ options:
   # Keep 0 unless multi-pack parsing is misaligned.
   force_pack_offset: 0
 schema:
-  mqtt_host: str
-  mqtt_port: int
-  mqtt_user: str
-  mqtt_password: str
-  mqtt_ha_discovery: bool
-  mqtt_ha_discovery_topic: str
-  mqtt_base_topic: str
-  connection_type: list(IP|Serial)
-  bms_ip: str
-  bms_port: int
-  bms_serial: str
-  scan_interval: int
-  debug_output: int
+  mqtt_host: "str"
+  mqtt_port: "port"
+  mqtt_user: "str"
+  mqtt_password: "password"
+  mqtt_ha_discovery: "bool"
+  mqtt_ha_discovery_topic: "str"
+  mqtt_base_topic: "str"
+  connection_type: "list(IP|Serial)"
+  bms_ip: "str"
+  bms_port: "port"
+  bms_serial: "str"
+  scan_interval: "int"
+  debug_output: "int"
   bms_connect_retries: "int?"
   bms_connect_retry_delay: "int?"
   force_pack_offset: "int?"
