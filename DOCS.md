@@ -57,16 +57,19 @@ Default: `IP`
 
 ### Option: `bms_ip`
 BMS TCP bridge/server IP when `connection_type: IP`.
+Not used when `connection_type: Serial`.
 Default: `10.0.0.161`
 
 ### Option: `bms_port`
 BMS TCP bridge/server port when `connection_type: IP`.
 Must be a valid port number (`1`-`65535`).
+Not used when `connection_type: Serial`.
 Default: `5000`
 
 ### Option: `bms_serial`
 Serial device path when `connection_type: Serial`.  
 Example: `/dev/ttyUSB0`
+Not used when `connection_type: IP`.
 Default: `/dev/ttyUSB0`
 
 ### Option: `scan_interval`
@@ -108,6 +111,8 @@ Default when omitted: `0` (no padding)
 - Use `connection_type: IP` for TCP-to-RS232 bridges.
 - Use `connection_type: Serial` for direct serial adapters passed through to
   Home Assistant.
+- `bms_ip`/`bms_port` are required only for `IP`; `bms_serial` is required only
+  for `Serial`.
 - If discovery is enabled, entities are published to the configured discovery
   topic and state topics under `mqtt_base_topic`.
 - Changing zero-pad settings changes MQTT topic/entity naming and can create

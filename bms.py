@@ -39,8 +39,25 @@ else:
 
 
 scan_interval = config['scan_interval']
-connection_type = config['connection_type']
-bms_serial = config['bms_serial']
+connection_type = config.get('connection_type', 'IP')
+bms_ip = str(config.get('bms_ip', '')).strip()
+bms_serial = str(config.get('bms_serial', '')).strip()
+try:
+    bms_port = int(config.get('bms_port', 0))
+except (TypeError, ValueError):
+    bms_port = 0
+
+if connection_type == "IP":
+    if len(bms_ip) == 0:
+        sys.exit("Configuration error: connection_type 'IP' requires bms_ip")
+    if bms_port <= 0:
+        sys.exit("Configuration error: connection_type 'IP' requires valid bms_port")
+elif connection_type == "Serial":
+    if len(bms_serial) == 0:
+        sys.exit("Configuration error: connection_type 'Serial' requires bms_serial")
+else:
+    sys.exit("Configuration error: connection_type must be 'IP' or 'Serial'")
+
 ha_discovery_enabled = config['mqtt_ha_discovery']
 # Optional tuning knob for installations where packet layout drifts between packs.
 # Default 0 keeps existing behavior.
@@ -1288,7 +1305,7 @@ def bms_getWarnInfo(bms):
 
 
 print("Connecting to BMS...")
-bms,bms_connected = bms_connect_with_retries(config['bms_ip'],config['bms_port'])
+bms,bms_connected = bms_connect_with_retries(bms_ip,bms_port)
 if bms_connected != True:
     # Startup cannot continue without BMS transport.
     sys.exit("Unable to connect to BMS after retries, exiting")
@@ -1358,7 +1375,7 @@ while code_running == True:
             print_initial = True
     else: #BMS not connected
         print("BMS disconnected, trying to reconnect...")
-        bms,bms_connected = bms_connect_with_retries(config['bms_ip'],config['bms_port'])
+        bms,bms_connected = bms_connect_with_retries(bms_ip,bms_port)
         if bms_connected != True:
             sys.exit("Unable to reconnect to BMS after retries, exiting")
         client.publish(config['mqtt_base_topic'] + "/availability","offline")
