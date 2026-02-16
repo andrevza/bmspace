@@ -32,7 +32,6 @@ If your ports look something like this, its likely a PACE BMS:
 ![PACE BMS Ports](https://github.com/andrevza/bmspace/blob/main/pace-bms-ports.png?raw=true)
 
 ## 3. Configuring
-**Currently the DEV version is the most capable, and should work for most.**
 
 ### 3.1 Manually
 Install the pre-requisites as per requirements.txt. Then edit the config.yaml file to suit your needs and run the script bms.py
@@ -45,11 +44,12 @@ Add this repository to Home Assistant with one click:
 
 [![Add BMS Pace repository to Home Assistant](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Fandrevza%2Fbmspace)
 
-### 3.3 Notes on configuration options
-* **debug_output**: Options are 0 for minimal, 1 for minor errors such as checksums, 2-3 for more severe debug logs.
-* **force_pack_offset**: This is currently available in the development version. This offset is used to force a defined offset between the data read from **multiple packs**. If you have more than one pack and only the first is read successfully, you can force an offset here to get subsequent packs to read in successfully. Default is 0, multiple of 2 (e.g. 2, 4, 6....) may work. As large as 20 has been used in one instance.
-* **zero_pad_number_cells**: Adds leading 0's to the cell voltages, forcing then to display sequential in some dasboarding tools. E.g. setting this to 2 will display voltages as cell_01 rahter than cell_1.
-* **zero_pad_number_packs**: Same as for _cells padding above.
+### 3.3 Configuration reference
+For the full and up-to-date list of App options, defaults, and optional settings, see:
+
+* `DOCS.md`
+
+This includes MQTT/BMS connection settings, retry behavior, parsing options, and optional topic naming controls.
 
 ## 4. RJ11 Interface (Typical, confirm your own model!)
 

@@ -44,3 +44,5 @@ schema:
   bms_connect_retries: "int?"
   bms_connect_retry_delay: "int?"
   force_pack_offset: "int?"
+  zero_pad_number_cells: "int?"
+  zero_pad_number_packs: "int?"

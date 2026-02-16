@@ -93,6 +93,16 @@ Manual byte offset between multi-pack analog blocks for devices that report
 misaligned payloads. Keep `0` unless multi-pack parsing is misaligned.
 Default: `0`
 
+### Option: `zero_pad_number_cells` (optional)
+Zero-padding width for cell numbers in MQTT topic/entity IDs.
+Example: `2` makes `cell_1` become `cell_01`.
+Default when omitted: `0` (no padding)
+
+### Option: `zero_pad_number_packs` (optional)
+Zero-padding width for pack numbers in MQTT topic/entity IDs.
+Example: `2` makes `pack_1` become `pack_01`.
+Default when omitted: `0` (no padding)
+
 ## Notes
 
 - Use `connection_type: IP` for TCP-to-RS232 bridges.
@@ -100,3 +110,5 @@ Default: `0`
   Home Assistant.
 - If discovery is enabled, entities are published to the configured discovery
   topic and state topics under `mqtt_base_topic`.
+- Changing zero-pad settings changes MQTT topic/entity naming and can create
+  new Home Assistant entities.
