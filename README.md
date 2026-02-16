@@ -1,5 +1,4 @@
 # BMS Pace - Python data retrieval
-## NB: This script(s) is no longer actively being developed. Feel free to fork.
 Pace Battery Management System
 Features:
 * Compatible as a Home Assistant App, see https://www.home-assistant.io/common-tasks/os#installing-a-third-party-app-repository
@@ -59,3 +58,8 @@ When viewed into the RJ11 socket, tab to the bottom, pins are ordered:
 
 Either a direct serial interface from your hardware, a USB to serial, or a network connected TCP server device will work. 
 Note the voltage levels are normal RS232 (and not TTL / 5V or something else). 
+
+## 5. Credits
+
+Original project and early implementation by Tertius:  
+https://github.com/Tertiush/bmspace/
