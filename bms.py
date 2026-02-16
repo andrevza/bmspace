@@ -295,6 +295,14 @@ def ha_discovery():
         
         print("Publishing HA Discovery topic...")
 
+        def publish_discovery(topic, payload, qos=0, retain=True):
+            # In debug mode, print each discovery entity so users can trace what was published to MQTT.
+            if debug_output >= 1:
+                entity_name = disc_payload.get('name', 'unknown')
+                state_topic = disc_payload.get('state_topic', 'unknown')
+                print("HA discovery publish: " + entity_name + " -> " + state_topic)
+            client.publish(topic, payload, qos=qos, retain=retain)
+
         disc_payload['availability_topic'] = config['mqtt_base_topic'] + "/availability"
 
         device = {}
@@ -312,74 +320,74 @@ def ha_discovery():
                 disc_payload['unique_id'] = "bmspace_" + bms_sn + "_pack_" + str(p) + "_v_cell_" + str(i+1)
                 disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_" + str(p) + "/v_cells/cell_" + str(i+1)
                 disc_payload['unit_of_measurement'] = "mV"
-                client.publish(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
+                publish_discovery(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
 
             for i in range(0,temps):
                 disc_payload['name'] = "Pack " + str(p) + " Temperature " + str(i+1)
                 disc_payload['unique_id'] = "bmspace_" + bms_sn + "_pack_" + str(p) + "_temp_" + str(i+1)
                 disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_" + str(p) + "/temps/temp_" + str(i+1)
                 disc_payload['unit_of_measurement'] = "°C"
-                client.publish(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
+                publish_discovery(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
 
             # disc_payload['name'] = "MOS_Temp"
             # disc_payload['unique_id'] = "bmspace_" + bms_sn + "_t_mos"
             # disc_payload['state_topic'] = config['mqtt_base_topic'] + "/t_mos"
             # disc_payload['unit_of_measurement'] = "°C"
-            # client.publish(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'] + "/config",json.dumps(disc_payload),qos=0, retain=True)
+            # publish_discovery(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'] + "/config",json.dumps(disc_payload),qos=0, retain=True)
 
             # disc_payload['name'] = "Environmental_Temp"
             # disc_payload['unique_id'] = "bmspace_" + bms_sn + "_t_env"
             # disc_payload['state_topic'] = config['mqtt_base_topic'] + "/t_env"
             # disc_payload['unit_of_measurement'] = "°C"
-            # client.publish(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'] + "/config",json.dumps(disc_payload),qos=0, retain=True)
+            # publish_discovery(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'] + "/config",json.dumps(disc_payload),qos=0, retain=True)
 
             disc_payload['name'] = "Pack " + str(p) + " Current"
             disc_payload['unique_id'] = "bmspace_" + bms_sn + "_pack_" + str(p) + "_i_pack"
             disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_" + str(p) + "/i_pack"
             disc_payload['unit_of_measurement'] = "A"
-            client.publish(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
+            publish_discovery(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
 
             disc_payload['name'] = "Pack " + str(p) + " Voltage"
             disc_payload['unique_id'] = "bmspace_" + bms_sn + "_pack_" + str(p) + "_v_pack"
             disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_" + str(p) + "/v_pack"
             disc_payload['unit_of_measurement'] = "V"
-            client.publish(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
+            publish_discovery(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
 
             disc_payload['name'] = "Pack " + str(p) + " Remaining Capacity"
             disc_payload['unique_id'] = "bmspace_" + bms_sn + "_pack_" + str(p) + "_i_remain_cap"
             disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_" + str(p) + "/i_remain_cap"
             disc_payload['unit_of_measurement'] = "mAh"
-            client.publish(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
+            publish_discovery(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
 
             disc_payload['name'] = "Pack " + str(p) + " State of Health"
             disc_payload['unique_id'] = "bmspace_" + bms_sn + "_pack_" + str(p) + "_soh"
             disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_" + str(p) + "/soh"
             disc_payload['unit_of_measurement'] = "%"
-            client.publish(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
+            publish_discovery(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
 
             disc_payload['name'] = "Pack " + str(p) + " Cycles"
             disc_payload['unique_id'] = "bmspace_" + bms_sn + "_pack_" + str(p) + "_cycles"
             disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_" + str(p) + "/cycles"
             disc_payload['unit_of_measurement'] = ""
-            client.publish(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
+            publish_discovery(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
 
             disc_payload['name'] = "Pack " + str(p) + " Full Capacity"
             disc_payload['unique_id'] = "bmspace_" + bms_sn + "_pack_" + str(p) + "_i_full_cap"
             disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_" + str(p) + "/i_full_cap"
             disc_payload['unit_of_measurement'] = "mAh"
-            client.publish(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
+            publish_discovery(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
 
             disc_payload['name'] = "Pack " + str(p) + " Design Capacity"
             disc_payload['unique_id'] = "bmspace_" + bms_sn + "_pack_" + str(p) + "_i_design_cap"
             disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_" + str(p) + "/i_design_cap"
             disc_payload['unit_of_measurement'] = "mAh"
-            client.publish(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
+            publish_discovery(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
 
             disc_payload['name'] = "Pack " + str(p) + " State of Charge"
             disc_payload['unique_id'] = "bmspace_" + bms_sn + "_pack_" + str(p) + "_soc"
             disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_" + str(p) + "/soc"
             disc_payload['unit_of_measurement'] = "%"
-            client.publish(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
+            publish_discovery(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
 
             # Remove optional unit field when switching to non-numeric entities.
             disc_payload.pop('unit_of_measurement', None)
@@ -387,17 +395,17 @@ def ha_discovery():
             disc_payload['name'] = "Pack " + str(p) + " Warnings"
             disc_payload['unique_id'] = "bmspace_" + bms_sn + "_pack_" + str(p) + "_warnings"
             disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_" + str(p) + "/warnings"
-            client.publish(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
+            publish_discovery(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
 
             disc_payload['name'] = "Pack " + str(p) + " Balancing1"
             disc_payload['unique_id'] = "bmspace_" + bms_sn + "_pack_" + str(p) + "_balancing1"
             disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_" + str(p) + "/balancing1"
-            client.publish(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
+            publish_discovery(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
 
             disc_payload['name'] = "Pack " + str(p) + " Balancing2"
             disc_payload['unique_id'] = "bmspace_" + bms_sn + "_pack_" + str(p) + "_balancing2"
             disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_" + str(p) + "/balancing2"
-            client.publish(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
+            publish_discovery(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
 
 
             # Binary Sensors
@@ -406,76 +414,76 @@ def ha_discovery():
             disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_" + str(p) + "/prot_short_circuit"
             disc_payload['payload_on'] = "1"
             disc_payload['payload_off'] = "0"
-            client.publish(config['mqtt_ha_discovery_topic']+"/binary_sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
+            publish_discovery(config['mqtt_ha_discovery_topic']+"/binary_sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
 
             disc_payload['name'] = "Pack " + str(p) + " Protection Discharge Current"
             disc_payload['unique_id'] = "bmspace_" + bms_sn + "_pack_" + str(p) + "_prot_discharge_current"
             disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_" + str(p) + "/prot_discharge_current"
             disc_payload['payload_on'] = "1"
             disc_payload['payload_off'] = "0"
-            client.publish(config['mqtt_ha_discovery_topic']+"/binary_sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
+            publish_discovery(config['mqtt_ha_discovery_topic']+"/binary_sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
 
             disc_payload['name'] = "Pack " + str(p) + " Protection Charge Current"
             disc_payload['unique_id'] = "bmspace_" + bms_sn + "_pack_" + str(p) + "_prot_charge_current"
             disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_" + str(p) + "/prot_charge_current"
             disc_payload['payload_on'] = "1"
             disc_payload['payload_off'] = "0"
-            client.publish(config['mqtt_ha_discovery_topic']+"/binary_sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
+            publish_discovery(config['mqtt_ha_discovery_topic']+"/binary_sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
 
             disc_payload['name'] = "Pack " + str(p) + " Current Limit"
             disc_payload['unique_id'] = "bmspace_" + bms_sn + "_pack_" + str(p) + "_current_limit"
             disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_" + str(p) + "/current_limit"
             disc_payload['payload_on'] = "1"
             disc_payload['payload_off'] = "0"
-            client.publish(config['mqtt_ha_discovery_topic']+"/binary_sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
+            publish_discovery(config['mqtt_ha_discovery_topic']+"/binary_sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
 
             disc_payload['name'] = "Pack " + str(p) + " Charge FET"
             disc_payload['unique_id'] = "bmspace_" + bms_sn + "_pack_" + str(p) + "_charge_fet"
             disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_" + str(p) + "/charge_fet"
             disc_payload['payload_on'] = "1"
             disc_payload['payload_off'] = "0"
-            client.publish(config['mqtt_ha_discovery_topic']+"/binary_sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
+            publish_discovery(config['mqtt_ha_discovery_topic']+"/binary_sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
 
             disc_payload['name'] = "Pack " + str(p) + " Discharge FET"
             disc_payload['unique_id'] = "bmspace_" + bms_sn + "_pack_" + str(p) + "_discharge_fet"
             disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_" + str(p) + "/discharge_fet"
             disc_payload['payload_on'] = "1"
             disc_payload['payload_off'] = "0"
-            client.publish(config['mqtt_ha_discovery_topic']+"/binary_sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
+            publish_discovery(config['mqtt_ha_discovery_topic']+"/binary_sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
 
             disc_payload['name'] = "Pack " + str(p) + " Pack Indicate"
             disc_payload['unique_id'] = "bmspace_" + bms_sn + "_pack_" + str(p) + "_pack_indicate"
             disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_" + str(p) + "/pack_indicate"
             disc_payload['payload_on'] = "1"
             disc_payload['payload_off'] = "0"
-            client.publish(config['mqtt_ha_discovery_topic']+"/binary_sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
+            publish_discovery(config['mqtt_ha_discovery_topic']+"/binary_sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
 
             disc_payload['name'] = "Pack " + str(p) + " Reverse"
             disc_payload['unique_id'] = "bmspace_" + bms_sn + "_pack_" + str(p) + "_reverse"
             disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_" + str(p) + "/reverse"
             disc_payload['payload_on'] = "1"
             disc_payload['payload_off'] = "0"
-            client.publish(config['mqtt_ha_discovery_topic']+"/binary_sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
+            publish_discovery(config['mqtt_ha_discovery_topic']+"/binary_sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
 
             disc_payload['name'] = "Pack " + str(p) + " AC In"
             disc_payload['unique_id'] = "bmspace_" + bms_sn + "_pack_" + str(p) + "_ac_in"
             disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_" + str(p) + "/ac_in"
             disc_payload['payload_on'] = "1"
             disc_payload['payload_off'] = "0"
-            client.publish(config['mqtt_ha_discovery_topic']+"/binary_sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
+            publish_discovery(config['mqtt_ha_discovery_topic']+"/binary_sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
 
             disc_payload['name'] = "Pack " + str(p) + " Heart"
             disc_payload['unique_id'] = "bmspace_" + bms_sn + "_pack_" + str(p) + "_heart"
             disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_" + str(p) + "/heart"
             disc_payload['payload_on'] = "1"
             disc_payload['payload_off'] = "0"
-            client.publish(config['mqtt_ha_discovery_topic']+"/binary_sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
+            publish_discovery(config['mqtt_ha_discovery_topic']+"/binary_sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
 
             disc_payload['name'] = "Pack " + str(p) + " Cell Max Volt Diff"
             disc_payload['unique_id'] = "bmspace_" + bms_sn + "_pack_" + str(p) + "_cells_max_diff_calc"
             disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_" + str(p) + "/cells_max_diff_calc"
             disc_payload['unit_of_measurement'] = "mV"
-            client.publish(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
+            publish_discovery(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
 
         # Publish aggregate pack entities once (not once per pack).
         disc_payload.pop('payload_on', None)
@@ -486,31 +494,31 @@ def ha_discovery():
         disc_payload['unique_id'] = "bmspace_" + bms_sn + "_pack_i_remain_cap"
         disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_remain_cap"
         disc_payload['unit_of_measurement'] = "mAh"
-        client.publish(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
+        publish_discovery(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
 
         disc_payload['name'] = "Pack Full Capacity"
         disc_payload['unique_id'] = "bmspace_" + bms_sn + "_pack_i_full_cap"
         disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_full_cap"
         disc_payload['unit_of_measurement'] = "mAh"
-        client.publish(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
+        publish_discovery(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
 
         disc_payload['name'] = "Pack Design Capacity"
         disc_payload['unique_id'] = "bmspace_" + bms_sn + "_pack_i_design_cap"
         disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_design_cap"
         disc_payload['unit_of_measurement'] = "mAh"
-        client.publish(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
+        publish_discovery(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
 
         disc_payload['name'] = "Pack State of Charge"
         disc_payload['unique_id'] = "bmspace_" + bms_sn + "_pack_soc"
         disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_soc"
         disc_payload['unit_of_measurement'] = "%"
-        client.publish(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
+        publish_discovery(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
 
         disc_payload['name'] = "Pack State of Health"
         disc_payload['unique_id'] = "bmspace_" + bms_sn + "_pack_soh"
         disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_soh"
         disc_payload['unit_of_measurement'] = "%"
-        client.publish(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
+        publish_discovery(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
 
         print("Finished - Publishing HA Discovery topic")
 
