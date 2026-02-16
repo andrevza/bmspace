@@ -42,6 +42,10 @@ NB: Tested with Python 3.9. Should work on later version as well.
 ### 3.2 Home Assistant
 All configuration options are available from within Home Assistant.
 
+Add this repository to Home Assistant with one click:
+
+[![Add BMS Pace repository to Home Assistant](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Fandrevza%2Fbmspace)
+
 ### 3.3 Notes on configuration options
 * **debug_output**: Options are 0 for minimal, 1 for minor errors such as checksums, 2-3 for more severe debug logs.
 * **force_pack_offset**: This is currently available in the development version. This offset is used to force a defined offset between the data read from **multiple packs**. If you have more than one pack and only the first is read successfully, you can force an offset here to get subsequent packs to read in successfully. Default is 0, multiple of 2 (e.g. 2, 4, 6....) may work. As large as 20 has been used in one instance.
