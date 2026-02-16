@@ -18,7 +18,11 @@ if os.path.exists('/data/options.json'):
     print("Loading options.json")
     with open(r'/data/options.json') as file:
         config = json.load(file)
-        print("Config: " + json.dumps(config))
+        safe_config = dict(config)
+        for secret_key in ("mqtt_password",):
+            if secret_key in safe_config:
+                safe_config[secret_key] = "***"
+        print("Config: " + json.dumps(safe_config))
 
 elif os.path.exists('config.yaml'):
     print("Loading config.yaml")
