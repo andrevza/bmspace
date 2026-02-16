@@ -27,11 +27,6 @@ options:
   bms_serial: "/dev/ttyUSB0"
   scan_interval: 5
   debug_output: 0
-  bms_connect_retries: 5
-  bms_connect_retry_delay: 5
-  # Optional byte offset applied between pack blocks during analog parsing.
-  # Keep 0 unless multi-pack parsing is misaligned.
-  force_pack_offset: 0
 schema:
   mqtt_host: "str"
   mqtt_port: "port"

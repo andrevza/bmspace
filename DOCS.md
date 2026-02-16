@@ -18,27 +18,29 @@ bms_port: 5000
 bms_serial: "/dev/ttyUSB0"
 scan_interval: 5
 debug_output: 0
-bms_connect_retries: 5
-bms_connect_retry_delay: 5
-force_pack_offset: 0
 ```
 
 ### Option: `mqtt_host`
 Hostname or IP of the MQTT broker.
+Default: `10.0.0.132`
 
 ### Option: `mqtt_port`
 MQTT broker TCP port.
 Must be a valid port number (`1`-`65535`).
+Default: `1883`
 
 ### Option: `mqtt_user`
 MQTT username.
+Default: `mqtt-users`
 
 ### Option: `mqtt_password`
 MQTT password.
 In Home Assistant this uses a password field, so the value is masked in the UI.
+Default: `mqtt-users`
 
 ### Option: `mqtt_ha_discovery`
 Enable Home Assistant MQTT discovery entity publishing.
+Default: `true`
 
 ### Option: `mqtt_ha_discovery_topic`
 Home Assistant MQTT discovery prefix topic.  
@@ -51,36 +53,45 @@ Default: `bmspace`
 ### Option: `connection_type`
 BMS transport type.  
 Allowed values: `IP` or `Serial`
+Default: `IP`
 
 ### Option: `bms_ip`
 BMS TCP bridge/server IP when `connection_type: IP`.
+Default: `10.0.0.161`
 
 ### Option: `bms_port`
 BMS TCP bridge/server port when `connection_type: IP`.
 Must be a valid port number (`1`-`65535`).
+Default: `5000`
 
 ### Option: `bms_serial`
 Serial device path when `connection_type: Serial`.  
 Example: `/dev/ttyUSB0`
+Default: `/dev/ttyUSB0`
 
 ### Option: `scan_interval`
 Polling interval in seconds between telemetry cycles.
+Default: `5`
 
 ### Option: `debug_output`
 Debug verbosity level:
 - `0`: minimal output
 - `1`: include non-fatal parse/debug messages and discovery entity logging
 - `2`/`3`: increasingly verbose protocol-level debug output
+Default: `0`
 
 ### Option: `bms_connect_retries` (optional)
 Number of retry attempts when connecting/reconnecting to the BMS.
+Default when omitted: `5` (minimum `1`)
 
 ### Option: `bms_connect_retry_delay` (optional)
 Delay in seconds between BMS connection retry attempts.
+Default when omitted: `5` seconds (minimum `1`)
 
 ### Option: `force_pack_offset` (optional)
 Manual byte offset between multi-pack analog blocks for devices that report
-misaligned payloads. Keep `0` unless multi-pack parsing is offset.
+misaligned payloads. Keep `0` unless multi-pack parsing is misaligned.
+Default: `0`
 
 ## Notes
 
