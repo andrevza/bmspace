@@ -7,6 +7,7 @@ import json
 import serial
 import atexit
 import sys
+import signal
 import constants
 
 print("Starting up...")
@@ -41,6 +42,8 @@ bms_connect_retry_delay = max(1, int(config.get('bms_connect_retry_delay', 5)))
 code_running = True
 bms_connected = False
 mqtt_connected = False
+bms = None
+shutdown_started = False
 print_initial = True
 debug_output = config['debug_output']
 disc_payload = {}
@@ -103,12 +106,62 @@ if mqtt_connect():
 else:
     print("MQTT not connected on startup, will retry...")
 
+def graceful_shutdown(reason="shutdown request"):
+    global shutdown_started
+    global code_running
+    global bms_connected
+    global mqtt_connected
+    global bms
+
+    if shutdown_started:
+        return
+    shutdown_started = True
+
+    print("Shutdown requested (" + str(reason) + "), starting graceful shutdown...")
+    code_running = False
+
+    if bms_connected and bms:
+        print("Disconnecting from BMS...")
+        try:
+            bms.close()
+            print("BMS disconnected")
+        except Exception as e:
+            print("Error disconnecting BMS: " + str(e))
+        bms_connected = False
+    else:
+        print("BMS already disconnected")
+
+    print("Disconnecting MQTT...")
+    try:
+        client.publish(config['mqtt_base_topic'] + "/availability","offline")
+    except Exception as e:
+        print("Error publishing MQTT offline availability: " + str(e))
+
+    try:
+        client.loop_stop()
+    except Exception as e:
+        print("Error stopping MQTT loop: " + str(e))
+
+    try:
+        client.disconnect()
+        print("MQTT disconnected")
+    except Exception as e:
+        print("Error disconnecting MQTT: " + str(e))
+    mqtt_connected = False
+
+
+def handle_shutdown_signal(signum, frame):
+    graceful_shutdown("signal " + str(signum))
+    sys.exit(0)
+
+
 def exit_handler():
-    print("Script exiting")
-    client.publish(config['mqtt_base_topic'] + "/availability","offline")
+    graceful_shutdown("atexit")
     return
 
 atexit.register(exit_handler)
+signal.signal(signal.SIGTERM, handle_shutdown_signal)
+signal.signal(signal.SIGINT, handle_shutdown_signal)
 
 def bms_connect(address, port):
 
@@ -1267,4 +1320,4 @@ while code_running == True:
         time.sleep(5)
         print_initial = True
 
-client.loop_stop()
+graceful_shutdown("main loop exit")
