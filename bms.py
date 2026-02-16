@@ -860,11 +860,20 @@ def bms_getAnalogData(bms,batNumber):
         return(False,inc_data)
 
     try:
+        def read_hex(length, field_name):
+            nonlocal byte_index
+            if byte_index + length > len(inc_data):
+                raise ValueError(
+                    "Truncated analog payload at " + field_name +
+                    " (index " + str(byte_index) + ", need " + str(length) + " hex chars, total " + str(len(inc_data)) + ")"
+                )
+            raw = inc_data[byte_index:byte_index+length]
+            byte_index += length
+            return int(raw,16)
 
-        packs = int(inc_data[byte_index:byte_index+2],16)
+        packs = read_hex(2, "packs")
         if print_initial:
             print("Packs: " + str(packs))
-        byte_index += 2
 
         v_cell = {}
         t_cell = {}
@@ -872,18 +881,16 @@ def bms_getAnalogData(bms,batNumber):
         for p in range(1,packs+1):
             # Each pack block starts with its cell-count marker.
             # We read this marker first, then parse that many cell voltages.
-            cells = int(inc_data[byte_index:byte_index+2],16)
+            cells = read_hex(2, "pack " + str(p) + " cell count")
 
             if print_initial:
                 print("Pack " + str(p) + ", Total cells: " + str(cells))
-            byte_index += 2
             
             cell_min_volt = 0
             cell_max_volt = 0
 
             for i in range(0,cells):
-                v_cell[(p-1,i)] = int(inc_data[byte_index:byte_index+4],16)
-                byte_index += 4
+                v_cell[(p-1,i)] = read_hex(4, "pack " + str(p) + " cell " + str(i+1) + " voltage")
                 client.publish(config['mqtt_base_topic'] + "/pack_" + str(p) + "/v_cells/cell_" + str(i+1) ,str(v_cell[(p-1,i)]))
                 if print_initial:
                     print("Pack " + str(p) +", V Cell" + str(i+1) + ": " + str(v_cell[(p-1,i)]) + " mV")
@@ -904,14 +911,12 @@ def bms_getAnalogData(bms,batNumber):
             if print_initial:
                 print("Pack " + str(p) +", Cell Max Diff Volt Calc: " + str(cell_max_diff_volt) + " mV")
 
-            temps = int(inc_data[byte_index:byte_index + 2],16)
+            temps = read_hex(2, "pack " + str(p) + " temperature count")
             if print_initial:
                 print("Pack " + str(p) + ", Total temperature sensors: " + str(temps))
-            byte_index += 2
 
             for i in range(0,temps): #temps-2
-                t_cell[(p-1,i)] = (int(inc_data[byte_index:byte_index + 4],16)-2730)/10
-                byte_index += 4
+                t_cell[(p-1,i)] = (read_hex(4, "pack " + str(p) + " temp " + str(i+1)) - 2730)/10
                 client.publish(config['mqtt_base_topic'] + "/pack_" + str(p) + "/temps/temp_" + str(i+1) ,str(round(t_cell[(p-1,i)],1)))
                 if print_initial:
                     print("Pack " + str(p) + ", Temp" + str(i+1) + ": " + str(round(t_cell[(p-1,i)],1)) + " ℃")
@@ -927,8 +932,7 @@ def bms_getAnalogData(bms,batNumber):
             # if print_initial:
             #     print("T Env: " + str(t_env) + " Deg")
 
-            i_pack.append(int(inc_data[byte_index:byte_index+4],16))
-            byte_index += 4
+            i_pack.append(read_hex(4, "pack " + str(p) + " current"))
             if i_pack[p-1] >= 32768:
                 i_pack[p-1] -= 65536
             i_pack[p-1] = i_pack[p-1]/100
@@ -936,22 +940,21 @@ def bms_getAnalogData(bms,batNumber):
             if print_initial:
                 print("Pack " + str(p) + ", I Pack: " + str(i_pack[p-1]) + " A")
 
-            v_pack.append(int(inc_data[byte_index:byte_index+4],16)/1000)
-            byte_index += 4
+            v_pack.append(read_hex(4, "pack " + str(p) + " voltage")/1000)
             client.publish(config['mqtt_base_topic'] + "/pack_" + str(p) + "/v_pack",str(v_pack[p-1]))
             if print_initial:
                 print("Pack " + str(p) + ", V Pack: " + str(v_pack[p-1]) + " V")
 
-            i_remain_cap.append(int(inc_data[byte_index:byte_index+4],16)*10)
-            byte_index += 4
+            i_remain_cap.append(read_hex(4, "pack " + str(p) + " remaining capacity")*10)
             client.publish(config['mqtt_base_topic'] + "/pack_" + str(p) + "/i_remain_cap",str(i_remain_cap[p-1]))
             if print_initial:
                 print("Pack " + str(p) + ", I Remaining Capacity: " + str(i_remain_cap[p-1]) + " mAh")
 
+            if byte_index + 2 > len(inc_data):
+                raise ValueError("Truncated analog payload before pack " + str(p) + " reserved field")
             byte_index += 2 # Manual: Define number P = 3
 
-            i_full_cap.append(int(inc_data[byte_index:byte_index+4],16)*10)
-            byte_index += 4
+            i_full_cap.append(read_hex(4, "pack " + str(p) + " full capacity")*10)
             client.publish(config['mqtt_base_topic'] + "/pack_" + str(p) + "/i_full_cap",str(i_full_cap[p-1]))
             if print_initial:
                 print("Pack " + str(p) + ", I Full Capacity: " + str(i_full_cap[p-1]) + " mAh")
@@ -966,14 +969,12 @@ def bms_getAnalogData(bms,batNumber):
             if print_initial:
                 print("Pack " + str(p) + ", SOC: " + str(soc[p-1]) + " %")
 
-            cycles.append(int(inc_data[byte_index:byte_index+4],16))
-            byte_index += 4
+            cycles.append(read_hex(4, "pack " + str(p) + " cycles"))
             client.publish(config['mqtt_base_topic'] + "/pack_" + str(p) + "/cycles",str(cycles[p-1]))
             if print_initial:
                 print("Pack " + str(p) + ", Cycles: " + str(cycles[p-1]))
 
-            i_design_cap.append(int(inc_data[byte_index:byte_index+4],16)*10)
-            byte_index += 4
+            i_design_cap.append(read_hex(4, "pack " + str(p) + " design capacity")*10)
             client.publish(config['mqtt_base_topic'] + "/pack_" + str(p) + "/i_design_cap",str(i_design_cap[p-1]))
             if print_initial:
                 print("Pack " + str(p) + ", Design Capacity: " + str(i_design_cap[p-1]) + " mAh")
@@ -988,7 +989,9 @@ def bms_getAnalogData(bms,batNumber):
             if print_initial:
                 print("Pack " + str(p) + ", SOH: " + str(soh[p-1]) + " %")
 
-            byte_index += 2
+            # Some firmware variants omit this trailing word on the last pack.
+            if byte_index + 2 <= len(inc_data):
+                byte_index += 2
 
             # Some BMS payloads include extra bytes between pack blocks.
             # This offset allows manual correction without changing parser logic.
@@ -998,11 +1001,15 @@ def bms_getAnalogData(bms,batNumber):
             # We use the expected cell-count marker as an anchor and scan in 2-byte steps
             # to skip INFOFLAG/extra words that may appear between packs.
             if p < packs:
-                while (byte_index < len(inc_data)) and (cells != int(inc_data[byte_index:byte_index+2],16)):
+                aligned = False
+                while byte_index + 2 <= len(inc_data):
+                    if cells == int(inc_data[byte_index:byte_index+2],16):
+                        aligned = True
+                        break
                     byte_index += 2
-                    if byte_index > len(inc_data):
-                        print("Error parsing BMS analog data: Cannot read multiple packs")
-                        return(False,"Error parsing BMS analog data: Cannot read multiple packs")
+                if not aligned:
+                    print("Error parsing BMS analog data: Cannot read multiple packs")
+                    return(False,"Error parsing BMS analog data: Cannot read multiple packs")
 
     except Exception as e:
         print("Error parsing BMS analog data: ", str(e))
@@ -1082,50 +1089,60 @@ def bms_getWarnInfo(bms):
     #inc_data = b'000210000000000000000000000000000000000600000000000000000000000E0000000000001110000000000000000000000000000000000600000000000000000000000E00000000000000'
 
     try:
+        def read_token(length, field_name):
+            nonlocal byte_index
+            if byte_index + length > len(inc_data):
+                raise ValueError(
+                    "Truncated warning payload at " + field_name +
+                    " (index " + str(byte_index) + ", need " + str(length) + " hex chars, total " + str(len(inc_data)) + ")"
+                )
+            token = inc_data[byte_index:byte_index+length]
+            byte_index += length
+            return token
 
-        packsW = int(inc_data[byte_index:byte_index+2],16)
+        def decode_warn(code):
+            return constants.warningStates.get(code, "state 0x" + code.decode("ascii"))
+
+        packsW = int(read_token(2, "packs"),16)
         if print_initial:
             print("Packs for warnings: " + str(packsW))
-        byte_index += 2
 
         for p in range(1,packsW+1):
 
-            cellsW = int(inc_data[byte_index:byte_index+2],16)
-            byte_index += 2
+            cellsW = int(read_token(2, "pack " + str(p) + " cell count"),16)
 
             for c in range(1,cellsW+1):
 
-                if inc_data[byte_index:byte_index+2] != b'00':
-                    warn = constants.warningStates[inc_data[byte_index:byte_index+2]]
+                warn_code = read_token(2, "pack " + str(p) + " cell " + str(c) + " warn")
+                if warn_code != b'00':
+                    warn = decode_warn(warn_code)
                     warnings += "cell " + str(c) + " " + warn + ", "
-                byte_index += 2
 
-            tempsW = int(inc_data[byte_index:byte_index+2],16)
-            byte_index += 2
+            tempsW = int(read_token(2, "pack " + str(p) + " temp count"),16)
         
             for t in range(1,tempsW+1):
 
-                if inc_data[byte_index:byte_index+2] != b'00':
-                    warn = constants.warningStates[inc_data[byte_index:byte_index+2]]
+                warn_code = read_token(2, "pack " + str(p) + " temp " + str(t) + " warn")
+                if warn_code != b'00':
+                    warn = decode_warn(warn_code)
                     warnings += "temp " + str(t) + " " + warn + ", "
-                byte_index += 2
 
-            if inc_data[byte_index:byte_index+2] != b'00':
-                warn = constants.warningStates[inc_data[byte_index:byte_index+2]]
+            warn_code = read_token(2, "pack " + str(p) + " charge current warn")
+            if warn_code != b'00':
+                warn = decode_warn(warn_code)
                 warnings += "charge current " + warn + ", "
-            byte_index += 2
 
-            if inc_data[byte_index:byte_index+2] != b'00':
-                warn = constants.warningStates[inc_data[byte_index:byte_index+2]]
+            warn_code = read_token(2, "pack " + str(p) + " total voltage warn")
+            if warn_code != b'00':
+                warn = decode_warn(warn_code)
                 warnings += "total voltage " + warn + ", "
-            byte_index += 2
 
-            if inc_data[byte_index:byte_index+2] != b'00':
-                warn = constants.warningStates[inc_data[byte_index:byte_index+2]]
+            warn_code = read_token(2, "pack " + str(p) + " discharge current warn")
+            if warn_code != b'00':
+                warn = decode_warn(warn_code)
                 warnings += "discharge current " + warn + ", "
-            byte_index += 2
 
-            protectState1 = ord(bytes.fromhex(inc_data[byte_index:byte_index+2].decode('ascii')))
+            protectState1 = int(read_token(2, "pack " + str(p) + " protectState1"),16)
             if protectState1 > 0:
                 warnings += "Protection State 1: "
                 for x in range(0,8):
@@ -1136,9 +1153,8 @@ def bms_getWarnInfo(bms):
             client.publish(config['mqtt_base_topic'] + "/pack_" + str(p) + "/prot_short_circuit",str(protectState1>>6 & 1))  
             client.publish(config['mqtt_base_topic'] + "/pack_" + str(p) + "/prot_discharge_current",str(protectState1>>5 & 1))  
             client.publish(config['mqtt_base_topic'] + "/pack_" + str(p) + "/prot_charge_current",str(protectState1>>4 & 1))  
-            byte_index += 2
 
-            protectState2 = ord(bytes.fromhex(inc_data[byte_index:byte_index+2].decode('ascii')))
+            protectState2 = int(read_token(2, "pack " + str(p) + " protectState2"),16)
             if protectState2 > 0:
                 warnings += "Protection State 2: "
                 for x in range(0,8):
@@ -1147,7 +1163,6 @@ def bms_getWarnInfo(bms):
                 warnings = warnings.rstrip("| ")
                 warnings += ", "
             client.publish(config['mqtt_base_topic'] + "/pack_" + str(p) + "/fully",str(protectState2>>7 & 1))  
-            byte_index += 2
 
             # instructionState = ord(bytes.fromhex(inc_data[byte_index:byte_index+2].decode('ascii')))
             # if instructionState > 0:
@@ -1159,7 +1174,7 @@ def bms_getWarnInfo(bms):
             #     warnings += ", "  
             # byte_index += 2
 
-            instructionState = ord(bytes.fromhex(inc_data[byte_index:byte_index+2].decode('ascii')))
+            instructionState = int(read_token(2, "pack " + str(p) + " instructionState"),16)
             client.publish(config['mqtt_base_topic'] + "/pack_" + str(p) + "/current_limit",str(instructionState>>0 & 1))
             client.publish(config['mqtt_base_topic'] + "/pack_" + str(p) + "/charge_fet",str(instructionState>>1 & 1))
             client.publish(config['mqtt_base_topic'] + "/pack_" + str(p) + "/discharge_fet",str(instructionState>>2 & 1))
@@ -1167,9 +1182,8 @@ def bms_getWarnInfo(bms):
             client.publish(config['mqtt_base_topic'] + "/pack_" + str(p) + "/reverse",str(instructionState>>4 & 1))
             client.publish(config['mqtt_base_topic'] + "/pack_" + str(p) + "/ac_in",str(instructionState>>5 & 1))
             client.publish(config['mqtt_base_topic'] + "/pack_" + str(p) + "/heart",str(instructionState>>7 & 1))
-            byte_index += 2
 
-            controlState = ord(bytes.fromhex(inc_data[byte_index:byte_index+2].decode('ascii')))
+            controlState = int(read_token(2, "pack " + str(p) + " controlState"),16)
             if controlState > 0:
                 warnings += "Control State: "
                 for x in range(0,8):
@@ -1177,9 +1191,8 @@ def bms_getWarnInfo(bms):
                         warnings += constants.controlState[x+1] + " | "
                 warnings = warnings.rstrip("| ")
                 warnings += ", "  
-            byte_index += 2
 
-            faultState = ord(bytes.fromhex(inc_data[byte_index:byte_index+2].decode('ascii')))
+            faultState = int(read_token(2, "pack " + str(p) + " faultState"),16)
             if faultState > 0:
                 warnings += "Fault State: "
                 for x in range(0,8):
@@ -1187,15 +1200,12 @@ def bms_getWarnInfo(bms):
                         warnings += constants.faultState[x+1] + " | "
                 warnings = warnings.rstrip("| ")
                 warnings += ", "  
-            byte_index += 2
 
-            balanceState1 = '{0:08b}'.format(int(inc_data[byte_index:byte_index+2],16))
-            byte_index += 2
+            balanceState1 = '{0:08b}'.format(int(read_token(2, "pack " + str(p) + " balancing1"),16))
 
-            balanceState2 = '{0:08b}'.format(int(inc_data[byte_index:byte_index+2],16))
-            byte_index += 2
+            balanceState2 = '{0:08b}'.format(int(read_token(2, "pack " + str(p) + " balancing2"),16))
 
-            warnState1 = ord(bytes.fromhex(inc_data[byte_index:byte_index+2].decode('ascii')))
+            warnState1 = int(read_token(2, "pack " + str(p) + " warnState1"),16)
             if warnState1 > 0:
                 warnings += "Warning State 1: "
                 for x in range(0,8):
@@ -1203,9 +1213,8 @@ def bms_getWarnInfo(bms):
                         warnings += constants.warnState1[x+1] + " | "
                 warnings = warnings.rstrip("| ")
                 warnings += ", "  
-            byte_index += 2
 
-            warnState2 = ord(bytes.fromhex(inc_data[byte_index:byte_index+2].decode('ascii')))
+            warnState2 = int(read_token(2, "pack " + str(p) + " warnState2"),16)
             if warnState2 > 0:
                 warnings += "Warning State 2: "
                 for x in range(0,8):
@@ -1213,7 +1222,6 @@ def bms_getWarnInfo(bms):
                         warnings += constants.warnState2[x+1] + " | "
                 warnings = warnings.rstrip("| ")
                 warnings += ", "  
-            byte_index += 2
 
             warnings = warnings.rstrip(", ")
 
@@ -1232,7 +1240,7 @@ def bms_getWarnInfo(bms):
             warnings = ""
 
             #Test for non signed value (matching cell count), to skip possible INFOFLAG present in data
-            if (byte_index < len(inc_data)) and (cellsW != int(inc_data[byte_index:byte_index+2],16)):
+            if (byte_index + 2 <= len(inc_data)) and (cellsW != int(inc_data[byte_index:byte_index+2],16)):
                 byte_index += 2
 
     except Exception as e:
