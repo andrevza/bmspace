@@ -2,7 +2,7 @@
 ## NB: This script(s) is no longer actively being developed. Feel free to fork.
 Pace Battery Management System
 Features:
-* Compatible as a Home Assistant Add-on, see https://www.home-assistant.io/common-tasks/os#installing-third-party-add-ons
+* Compatible as a Home Assistant App, see https://www.home-assistant.io/common-tasks/os#installing-a-third-party-app-repository
 * Cell voltages
 * Temperatures
 * State of charge (SOC)
@@ -14,7 +14,7 @@ Features:
 
 ## 1. Important
 
-This addon comes with absolutely no guarantees whatsoever. Use at own risk.  
+This App comes with absolutely no guarantees whatsoever. Use at own risk.  
 Feel free to fork and expand!
 
 ## 2. Confirmed working with
@@ -34,6 +34,7 @@ If your ports look something like this, its likely a PACE BMS:
 
 ## 3. Configuring
 **Currently the DEV version is the most capable, and should work for most.**
+
 ### 3.1 Manually
 Install the pre-requisites as per requirements.txt. Then edit the config.yaml file to suit your needs and run the script bms.py
 NB: Tested with Python 3.9. Should work on later version as well.
