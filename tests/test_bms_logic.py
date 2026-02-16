@@ -340,6 +340,21 @@ class TestAnalogAndDiscovery(unittest.TestCase):
         topics = dict((t, p) for (t, p, _k) in self.ns["client"].published)
         self.assertEqual(topics["bmspace/pack_1/i_pack"], "-327.68")
 
+    def test_zero_padding_applies_to_runtime_topic_names(self):
+        """Configured pack/cell zero-padding should be reflected in MQTT runtime topics."""
+        info = self._build_one_pack_with_current("0001")
+        self.ns["bms_request"] = lambda *_args, **_kwargs: (True, info)
+        self.ns["fmt_pack"] = lambda n: str(n).zfill(2)
+        self.ns["fmt_cell"] = lambda n: str(n).zfill(2)
+
+        ok, _result = self.ns["bms_getAnalogData"](object(), batNumber=255)
+        self.assertTrue(ok)
+
+        topics = [t for (t, _p, _k) in self.ns["client"].published]
+        self.assertIn("bmspace/pack_01/v_cells/cell_01", topics)
+        self.assertIn("bmspace/pack_01/i_pack", topics)
+        self.assertNotIn("bmspace/pack_1/v_cells/cell_1", topics)
+
 
 class TestPackCapacityAndWarnings(unittest.TestCase):
     """Pack-capacity guard behavior and warning pack-loop correctness."""
@@ -441,6 +456,32 @@ class TestDiscoveryAggregateEntities(unittest.TestCase):
             ),
         )
         self.assertEqual(len(aggregate_states), 5)
+
+    def test_discovery_respects_zero_padding_for_pack_and_cell_ids(self):
+        """Discovery payload should use padded pack/cell numbering when configured."""
+        ns = load_bms_namespace({"ha_discovery"})
+        ns["json"] = json
+        ns["disc_payload"] = {}
+        ns["ha_discovery_enabled"] = True
+        ns["packs"] = 1
+        ns["cells"] = 1
+        ns["temps"] = 1
+        ns["bms_sn"] = "SN123"
+        ns["bms_version"] = "v1"
+        ns["config"] = {
+            "mqtt_base_topic": "bmspace",
+            "mqtt_ha_discovery_topic": "homeassistant",
+        }
+        ns["client"] = DummyClient()
+        ns["fmt_pack"] = lambda n: str(n).zfill(2)
+        ns["fmt_cell"] = lambda n: str(n).zfill(2)
+
+        ns["ha_discovery"]()
+
+        objects = [json.loads(payload) for (_topic, payload, _k) in ns["client"].published]
+        cell_obj = next((o for o in objects if o.get("name") == "Pack 01 Cell 01 Voltage"), None)
+        self.assertIsNotNone(cell_obj)
+        self.assertEqual(cell_obj["state_topic"], "bmspace/pack_01/v_cells/cell_01")
 
 
 class TestRetryHelpers(unittest.TestCase):
