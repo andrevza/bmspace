@@ -28,6 +28,11 @@ elif os.path.exists('config.yaml'):
     print("Loading config.yaml")
     with open(r'config.yaml') as file:
         config = yaml.load(file, Loader=yaml.FullLoader)['options']
+        safe_config = dict(config)
+        for secret_key in ("mqtt_password",):
+            if secret_key in safe_config:
+                safe_config[secret_key] = "***"
+        print("Config: " + json.dumps(safe_config))
         
 else:
     sys.exit("No config file found")  
