@@ -50,6 +50,9 @@ For the full and up-to-date list of App options, defaults, and optional settings
 * `DOCS.md`
 
 This includes MQTT/BMS connection settings, retry behavior, parsing options, and optional topic naming controls.
+For IP vs Serial setup (which fields are required for each mode), see `DOCS.md`:
+* `connection_type: IP` requires `bms_ip` and `bms_port`
+* `connection_type: Serial` requires `bms_serial`
 
 ## 4. RJ11 Interface (Typical, confirm your own model!)
 
