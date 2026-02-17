@@ -2,7 +2,7 @@
 
 ## Configuration
 
-Example add-on configuration:
+Example App configuration:
 
 ```yaml
 mqtt_host: "10.0.0.132"

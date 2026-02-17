@@ -42,7 +42,7 @@ All configuration options are available from within Home Assistant.
 
 Add this repository to Home Assistant with one click:
 
-[![Add BMS Pace repository to Home Assistant](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Fandrevza%2Fbmspace)
+[![Add BMS Pace App repository to Home Assistant](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Fandrevza%2Fbmspace)
 
 ### 3.3 Configuration reference
 For the full and up-to-date list of App options, defaults, and optional settings, see:
