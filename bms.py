@@ -357,6 +357,8 @@ def ha_discovery():
         disc_payload['device'] = device
 
         for p in range (1,packs+1):
+            # Core telemetry entities remain regular sensors.
+            disc_payload.pop('entity_category', None)
 
             for i in range(0,cells):
                 disc_payload['name'] = "Pack " + fmt_pack(p) + " Cell " + fmt_cell(i+1) + " Voltage"
@@ -434,6 +436,8 @@ def ha_discovery():
 
             # Remove optional unit field when switching to non-numeric entities.
             disc_payload.pop('unit_of_measurement', None)
+            # Operational/status style entities are better grouped under HA Diagnostic.
+            disc_payload['entity_category'] = "diagnostic"
 
             disc_payload['name'] = "Pack " + fmt_pack(p) + " Warnings"
             disc_payload['unique_id'] = "bmspace_" + bms_sn + "_pack_" + fmt_pack(p) + "_warnings"
@@ -531,6 +535,7 @@ def ha_discovery():
         # Publish aggregate pack entities once (not once per pack).
         disc_payload.pop('payload_on', None)
         disc_payload.pop('payload_off', None)
+        disc_payload.pop('entity_category', None)
         disc_payload.pop('unit_of_measurement', None)
 
         disc_payload['name'] = "Pack Remaining Capacity"
