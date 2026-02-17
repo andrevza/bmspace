@@ -1,6 +1,6 @@
 name: "BMS Pace"
 description: "Pace BMS Interface"
-version: "2.2.0"
+version: "3.0.0"
 slug: "bms_pace"
 url: "https://github.com/andrevza/bmspace"
 init: false
