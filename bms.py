@@ -1051,7 +1051,7 @@ def bms_getAnalogData(bms,batNumber):
         return(False,"Error parsing BMS analog data: " + str(e))
 
     if print_initial:
-        print("Script running....")
+        ts_print("Script running....")
 
     return True,True
 
