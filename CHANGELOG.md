@@ -1,5 +1,10 @@
 # Changelog
 
+## v3.0.1
+- Improved parser resilience for short/incomplete BMS frames: analog parsing now keeps already-parsed packs when later pack data is truncated, and warning parsing skips truncated warning frames instead of failing the cycle.
+- Added timestamped lifecycle and discovery logs (startup, shutdown request, HA discovery start/finish) using Python logging.
+- Standardized error output via logger-backed error paths so retrieval/parsing failures are consistently timestamped and easier to troubleshoot.
+
 ## v3.0.0
 - Improved MQTT and BMS connection resilience with explicit retry handling and safer startup/reconnect behavior.
 - Hardened protocol parsing for analog and warning payloads with clearer truncation/error handling and safer multi-pack alignment.
