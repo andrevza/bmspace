@@ -8,9 +8,23 @@ import serial
 import atexit
 import sys
 import signal
+import logging
 import constants
 
-print("Starting up...")
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+logger = logging.getLogger("bmspace")
+
+def ts_print(message):
+    logger.info(str(message))
+
+def log_error(message):
+    logger.error(str(message))
+
+ts_print("Starting up...")
 
 config = {}
 
@@ -87,15 +101,12 @@ temps = 6
 # Persistent TCP receive buffer for partial/combined socket frames.
 tcp_rx_buffer = b""
 
-
 print("Connection Type: " + connection_type)
-
 
 def fmt_pack(pack_number):
     if zero_pad_number_packs > 0:
         return str(pack_number).zfill(zero_pad_number_packs)
     return str(pack_number)
-
 
 def fmt_cell(cell_number):
     if zero_pad_number_cells > 0:
@@ -111,7 +122,6 @@ def on_disconnect(client, userdata, rc):
     print("MQTT disconnected with result code "+str(rc))
     global mqtt_connected
     mqtt_connected = False
-
 
 client = mqtt.Client()
 client.on_connect = on_connect
@@ -158,7 +168,7 @@ def graceful_shutdown(reason="shutdown request"):
         return
     shutdown_started = True
 
-    print("Shutdown requested (" + str(reason) + "), starting graceful shutdown...")
+    ts_print("Shutdown requested (" + str(reason) + "), starting graceful shutdown...")
     code_running = False
 
     if bms_connected and bms:
@@ -167,7 +177,7 @@ def graceful_shutdown(reason="shutdown request"):
             bms.close()
             print("BMS disconnected")
         except Exception as e:
-            print("Error disconnecting BMS: " + str(e))
+            log_error("disconnecting BMS: " + str(e))
         bms_connected = False
     else:
         print("BMS already disconnected")
@@ -176,25 +186,23 @@ def graceful_shutdown(reason="shutdown request"):
     try:
         client.publish(config['mqtt_base_topic'] + "/availability","offline")
     except Exception as e:
-        print("Error publishing MQTT offline availability: " + str(e))
+        log_error("publishing MQTT offline availability: " + str(e))
 
     try:
         client.loop_stop()
     except Exception as e:
-        print("Error stopping MQTT loop: " + str(e))
+        log_error("stopping MQTT loop: " + str(e))
 
     try:
         client.disconnect()
         print("MQTT disconnected")
     except Exception as e:
-        print("Error disconnecting MQTT: " + str(e))
+        log_error("disconnecting MQTT: " + str(e))
     mqtt_connected = False
-
 
 def handle_shutdown_signal(signum, frame):
     graceful_shutdown("signal " + str(signum))
     sys.exit(0)
-
 
 def exit_handler():
     graceful_shutdown("atexit")
@@ -328,7 +336,6 @@ def bms_get_data(comms):
         return False
 
 def ha_discovery():
-
     global ha_discovery_enabled
     global packs
     fmt_pack = globals().get("fmt_pack", lambda n: str(n))
@@ -336,7 +343,7 @@ def ha_discovery():
 
     if ha_discovery_enabled:
         
-        print("Publishing HA Discovery topic...")
+        ts_print("Publishing HA Discovery topic...")
 
         def publish_discovery(topic, payload, qos=0, retain=True):
             # In debug mode, print each discovery entity so users can trace what was published to MQTT.
@@ -373,18 +380,6 @@ def ha_discovery():
                 disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_" + fmt_pack(p) + "/temps/temp_" + str(i+1)
                 disc_payload['unit_of_measurement'] = "°C"
                 publish_discovery(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
-
-            # disc_payload['name'] = "MOS_Temp"
-            # disc_payload['unique_id'] = "bmspace_" + bms_sn + "_t_mos"
-            # disc_payload['state_topic'] = config['mqtt_base_topic'] + "/t_mos"
-            # disc_payload['unit_of_measurement'] = "°C"
-            # publish_discovery(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'] + "/config",json.dumps(disc_payload),qos=0, retain=True)
-
-            # disc_payload['name'] = "Environmental_Temp"
-            # disc_payload['unique_id'] = "bmspace_" + bms_sn + "_t_env"
-            # disc_payload['state_topic'] = config['mqtt_base_topic'] + "/t_env"
-            # disc_payload['unit_of_measurement'] = "°C"
-            # publish_discovery(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'] + "/config",json.dumps(disc_payload),qos=0, retain=True)
 
             disc_payload['name'] = "Pack " + fmt_pack(p) + " Current"
             disc_payload['unique_id'] = "bmspace_" + bms_sn + "_pack_" + fmt_pack(p) + "_i_pack"
@@ -453,7 +448,6 @@ def ha_discovery():
             disc_payload['unique_id'] = "bmspace_" + bms_sn + "_pack_" + fmt_pack(p) + "_balancing2"
             disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_" + fmt_pack(p) + "/balancing2"
             publish_discovery(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
-
 
             # Binary Sensors
             disc_payload['name'] = "Pack " + fmt_pack(p) + " Protection Short Circuit"
@@ -568,18 +562,16 @@ def ha_discovery():
         disc_payload['unit_of_measurement'] = "%"
         publish_discovery(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
 
-        print("Finished - Publishing HA Discovery topic")
+        ts_print("Finished - Publishing HA Discovery topic")
 
     else:
         print("HA Discovery Disabled")
 
 def chksum_calc(data):
-
     global debug_output
     chksum = 0
 
     try:
-
         for element in range(1, len(data)): #-5):
             chksum += (data[element])
         
@@ -600,8 +592,8 @@ def chksum_calc(data):
 
     except Exception as e:
         if debug_output > 0:
-            print("Error calculating CHKSUM using data: " + data)
-            print("Error details: ", str(e))
+            log_error(f"calculating CHKSUM using data: {data!r}")
+            log_error("CHKSUM error details: " + str(e))
         return(False)
 
     return(chksum)
@@ -629,13 +621,11 @@ def cid2_rtn(rtn):
         return False, False
 
 def bms_parse_data(inc_data):
-
     global debug_output
 
     #inc_data = b'~2501460070DC00020D100A0FF40FEA100E10040FF50FFD10010FFD0FE50FF5100A1001060BD20BD20BD40BD40BF80C1AFF7ECFCF258B02271001372710600D0FFA0FFC0FFB0FFC0FFE0FFB0FFA0FFA0FFB0FFD0FFC0FFB0FFB060BEF0BF10BEF0BED0BF70C04FDB1D02E29A9022AF80\r'
     
     try:
-        
         SOI = hex(ord(inc_data[0:1]))
         if SOI != '0x7e':
             return(False,"Incorrect starting byte for incoming data")
@@ -687,17 +677,16 @@ def bms_parse_data(inc_data):
 
         calc_CHKSUM = chksum_calc(inc_data[:len(inc_data)-5])
 
-
         if debug_output > 1:
             print("Calc CHKSUM: ", calc_CHKSUM)
     except Exception as e:
         if debug_output > 0:
-            print("Error1 calculating CHKSUM using data: ", inc_data)
+            log_error(f"Error1 calculating CHKSUM using data: {inc_data!r}")
         return(False,"Error1 calculating CHKSUM: " + str(e))
 
     if calc_CHKSUM == False:
         if debug_output > 0:
-            print("Error2 calculating CHKSUM using data: ", inc_data)
+            log_error(f"Error2 calculating CHKSUM using data: {inc_data!r}")
         return(False,"Error2 calculating CHKSUM")
 
     if CHKSUM.decode("ASCII") == calc_CHKSUM:
@@ -722,14 +711,9 @@ def bms_parse_data(inc_data):
         return(False,"Checksum error")
 
 def lchksum_calc(lenid):
-
     chksum = 0
 
     try:
-
-        # for element in range(1, len(lenid)): #-5):
-        #     chksum += (lenid[element])
-        
         for element in range(0, len(lenid)):
             chksum += int(chr(lenid[element]),16)
 
@@ -754,14 +738,12 @@ def lchksum_calc(lenid):
         chksum = format(chksum, 'X')
 
     except:
-
-        print("Error calculating LCHKSUM using LENID: ", lenid)
+        log_error(f"calculating LCHKSUM using LENID: {lenid!r}")
         return(False)
 
     return(chksum)
 
 def bms_request(bms, ver=b"\x32\x35",adr=b"\x30\x31",cid1=b"\x34\x36",cid2=b"\x43\x31",info=b"",LENID=False):
-
     global bms_connected
     global debug_output
     
@@ -799,13 +781,13 @@ def bms_request(bms, ver=b"\x32\x35",adr=b"\x30\x31",cid1=b"\x34\x36",cid2=b"\x4
 
     if not bms_sendData(bms,request):
         bms_connected = False
-        print("Error, connection to BMS lost")
+        log_error("connection to BMS lost")
         return(False,"Error, connection to BMS lost")
 
     inc_data = bms_get_data(bms)
 
     if inc_data == False:
-        print("Error retrieving data from BMS")
+        log_error("retrieving data from BMS")
         return(False,"Error retrieving data from BMS")
 
     if debug_output > 2:
@@ -831,7 +813,7 @@ def bms_getPackNumber(bms):
                     return(True,packNumber)
             except Exception:
                 if debug_output > 0:
-                    print("Error extracting total battery count in pack for ADR " + adr.decode("ascii"))
+                    log_error("extracting total battery count in pack for ADR " + adr.decode("ascii"))
 
     # Fallback: CID2=0x42 (analog) with INFO=FF includes total pack count in payload.
     success, inc_data = bms_request(bms,adr=b"FF",cid2=constants.cid2PackAnalogData,info=b"FF")
@@ -844,11 +826,10 @@ def bms_getPackNumber(bms):
             print("Total battery packs reported via CID2=0x42 fallback: " + str(packNumber))
         return(True,packNumber)
     except Exception:
-        print("Error extracting total battery count from analog fallback response")
+        log_error("extracting total battery count from analog fallback response")
         return(False,"Error extracting total battery count from analog fallback response")
 
 def bms_getVersion(comms, reported_packs=1):
-
     global bms_version
 
     success, INFO = bms_request(comms,cid2=constants.cid2SoftwareVersion)
@@ -857,7 +838,6 @@ def bms_getVersion(comms, reported_packs=1):
         return(False,INFO)
 
     try:
-
         bms_version = bytes.fromhex(INFO.decode("ascii")).decode("ASCII")
         client.publish(config['mqtt_base_topic'] + "/bms_version",bms_version)
         print("BMS Version: " + bms_version)
@@ -867,18 +847,16 @@ def bms_getVersion(comms, reported_packs=1):
     return(success,bms_version)
 
 def bms_getSerial(comms, reported_packs=1):
-
     global bms_sn
     global pack_sn
 
     success, INFO = bms_request(comms,cid2=constants.cid2SerialNumber)
 
     if success == False:
-        print("Error: " + INFO)
+        log_error(INFO)
         return(False,INFO, False)
 
     try:
-
         bms_sn = bytes.fromhex(INFO[0:30].decode("ascii")).decode("ASCII").replace(" ", "")
         pack_sn = bytes.fromhex(INFO[40:68].decode("ascii")).decode("ASCII").replace(" ", "")
         client.publish(config['mqtt_base_topic'] + "/bms_sn",bms_sn)
@@ -892,7 +870,6 @@ def bms_getSerial(comms, reported_packs=1):
     return(success,bms_sn,pack_sn)
 
 def bms_getAnalogData(bms,batNumber):
-
     global print_initial
     global cells
     global temps
@@ -979,17 +956,6 @@ def bms_getAnalogData(bms,batNumber):
                     client.publish(config['mqtt_base_topic'] + "/pack_" + fmt_pack(p) + "/temps/temp_" + str(i+1) ,str(round(t_cell[(p-1,i)],1)))
                     if print_initial:
                         print("Pack " + fmt_pack(p) + ", Temp" + str(i+1) + ": " + str(round(t_cell[(p-1,i)],1)) + " ℃")
-
-            # t_mos= (int(inc_data[byte_index:byte_index+4],16))/160-273
-            # client.publish(config['mqtt_base_topic'] + "/t_mos",str(round(t_mos,1)))
-            # if print_initial:
-            #     print("T Mos: " + str(t_mos) + " Deg")
-
-            # t_env= (int(inc_data[byte_index:byte_index+4],16))/160-273
-            # client.publish(config['mqtt_base_topic'] + "/t_env",str(round(t_env,1)))
-            # offset += 7
-            # if print_initial:
-            #     print("T Env: " + str(t_env) + " Deg")
 
                 i_pack.append(read_hex(4, "pack " + fmt_pack(p) + " current"))
                 if i_pack[p-1] >= 32768:
@@ -1099,7 +1065,6 @@ def bms_getPackCapacity(bms):
         return(False,inc_data)
 
     try:
-
         pack_remain_cap = int(inc_data[byte_index:byte_index+4],16)*10
         byte_index += 4
         client.publish(config['mqtt_base_topic'] + "/pack_remain_cap",str(pack_remain_cap))
@@ -1139,13 +1104,12 @@ def bms_getPackCapacity(bms):
             print("Pack SOH: " + str(pack_soh) + " %")
 
     except Exception as e:
-        print("Error parsing BMS pack capacity data: ", str(e))
+        log_error("parsing BMS pack capacity data: " + str(e))
         return False, "Error parsing BMS pack capacity data: " + str(e)
 
     return True,True
 
 def bms_getWarnInfo(bms):
-
     byte_index = 2
     packsW = 1
     warnings = ""
@@ -1182,7 +1146,6 @@ def bms_getWarnInfo(bms):
             cellsW = int(read_token(2, "pack " + fmt_pack(p) + " cell count"),16)
 
             for c in range(1,cellsW+1):
-
                 warn_code = read_token(2, "pack " + fmt_pack(p) + " cell " + str(c) + " warn")
                 if warn_code != b'00':
                     warn = decode_warn(warn_code)
@@ -1191,7 +1154,6 @@ def bms_getWarnInfo(bms):
             tempsW = int(read_token(2, "pack " + fmt_pack(p) + " temp count"),16)
         
             for t in range(1,tempsW+1):
-
                 warn_code = read_token(2, "pack " + fmt_pack(p) + " temp " + str(t) + " warn")
                 if warn_code != b'00':
                     warn = decode_warn(warn_code)
@@ -1233,16 +1195,6 @@ def bms_getWarnInfo(bms):
                 warnings = warnings.rstrip("| ")
                 warnings += ", "
             client.publish(config['mqtt_base_topic'] + "/pack_" + fmt_pack(p) + "/fully",str(protectState2>>7 & 1))  
-
-            # instructionState = ord(bytes.fromhex(inc_data[byte_index:byte_index+2].decode('ascii')))
-            # if instructionState > 0:
-            #     warnings += "Instruction State: "
-            #     for x in range(0,8):
-            #         if (instructionState & (1<<x)):
-            #              warnings += constants.instructionState[x+1] + " | "
-            #     warnings = warnings.rstrip("| ")
-            #     warnings += ", "  
-            # byte_index += 2
 
             instructionState = int(read_token(2, "pack " + fmt_pack(p) + " instructionState"),16)
             client.publish(config['mqtt_base_topic'] + "/pack_" + fmt_pack(p) + "/current_limit",str(instructionState>>0 & 1))
@@ -1342,16 +1294,16 @@ if success == True:
     reported_packs = data
     print("Batteries in pack: ", data)
 else:
-    print("Error retrieving number of batteries in pack")
+    log_error("Retrieving number of batteries in pack")
 
 success, data = bms_getVersion(bms, reported_packs)
 if success != True:
-    print("Error retrieving BMS version number")
+    log_error("Retrieving BMS version number")
 
 time.sleep(0.1)
 success, bms_sn, pack_sn = bms_getSerial(bms, reported_packs)
 if success != True:
-    print("Error retrieving BMS and pack serial numbers. This is required for HA Discovery. Exiting...")
+    log_error("Retrieving BMS and pack serial numbers. This is required for HA Discovery. Exiting...")
     quit()
 
 while code_running == True:
@@ -1361,15 +1313,15 @@ while code_running == True:
 
             analog_success, data = bms_getAnalogData(bms,batNumber=255)
             if analog_success != True:
-                print("Error retrieving BMS analog data: " + data)
+                log_error("Retrieving BMS analog data: " + data)
             time.sleep(scan_interval/3)
             success, data = bms_getPackCapacity(bms)
             if success != True:
-                print("Error retrieving BMS pack capacity: " + data)
+                log_error("Retrieving BMS pack capacity: " + data)
             time.sleep(scan_interval/3)
             success, data = bms_getWarnInfo(bms)
             if success != True:
-                print("Error retrieving BMS warning info: " + data)
+                log_error("Retrieving BMS warning info: " + data)
             time.sleep(scan_interval/3)
 
             # Only publish discovery after a valid analog frame, so HA entities match real pack/cell data
@@ -1378,10 +1330,7 @@ while code_running == True:
                 ha_discovery()
                 
             client.publish(config['mqtt_base_topic'] + "/availability","online")
-
             print_initial = False
-            
-
             repub_discovery += 1
             if repub_discovery*scan_interval > 3600:
                 repub_discovery = 0
