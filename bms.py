@@ -937,47 +937,48 @@ def bms_getAnalogData(bms,batNumber):
         t_cell = {}
 
         for p in range(1,packs+1):
-            # Each pack block starts with its cell-count marker.
-            # We read this marker first, then parse that many cell voltages.
-            cells = read_hex(2, "pack " + fmt_pack(p) + " cell count")
+            try:
+                # Each pack block starts with its cell-count marker.
+                # We read this marker first, then parse that many cell voltages.
+                cells = read_hex(2, "pack " + fmt_pack(p) + " cell count")
 
-            if print_initial:
-                print("Pack " + fmt_pack(p) + ", Total cells: " + str(cells))
-            
-            cell_min_volt = 0
-            cell_max_volt = 0
-
-            for i in range(0,cells):
-                v_cell[(p-1,i)] = read_hex(4, "pack " + fmt_pack(p) + " cell " + fmt_cell(i+1) + " voltage")
-                client.publish(config['mqtt_base_topic'] + "/pack_" + fmt_pack(p) + "/v_cells/cell_" + fmt_cell(i+1) ,str(v_cell[(p-1,i)]))
                 if print_initial:
-                    print("Pack " + fmt_pack(p) +", V Cell" + fmt_cell(i+1) + ": " + str(v_cell[(p-1,i)]) + " mV")
+                    print("Pack " + fmt_pack(p) + ", Total cells: " + str(cells))
+                
+                cell_min_volt = 0
+                cell_max_volt = 0
 
-                #Calculate cell max and min volt
-                if i == 0:
-                    cell_min_volt = v_cell[(p-1,i)]
-                    cell_max_volt = v_cell[(p-1,i)]
-                else:
-                    if v_cell[(p-1,i)] < cell_min_volt:
+                for i in range(0,cells):
+                    v_cell[(p-1,i)] = read_hex(4, "pack " + fmt_pack(p) + " cell " + fmt_cell(i+1) + " voltage")
+                    client.publish(config['mqtt_base_topic'] + "/pack_" + fmt_pack(p) + "/v_cells/cell_" + fmt_cell(i+1) ,str(v_cell[(p-1,i)]))
+                    if print_initial:
+                        print("Pack " + fmt_pack(p) +", V Cell" + fmt_cell(i+1) + ": " + str(v_cell[(p-1,i)]) + " mV")
+
+                    #Calculate cell max and min volt
+                    if i == 0:
                         cell_min_volt = v_cell[(p-1,i)]
-                    if v_cell[(p-1,i)] > cell_max_volt:
                         cell_max_volt = v_cell[(p-1,i)]
+                    else:
+                        if v_cell[(p-1,i)] < cell_min_volt:
+                            cell_min_volt = v_cell[(p-1,i)]
+                        if v_cell[(p-1,i)] > cell_max_volt:
+                            cell_max_volt = v_cell[(p-1,i)]
            
-            #Calculate cells max diff volt
-            cell_max_diff_volt = cell_max_volt - cell_min_volt
-            client.publish(config['mqtt_base_topic'] + "/pack_" + fmt_pack(p) + "/cells_max_diff_calc" ,str(cell_max_diff_volt))
-            if print_initial:
-                print("Pack " + fmt_pack(p) +", Cell Max Diff Volt Calc: " + str(cell_max_diff_volt) + " mV")
-
-            temps = read_hex(2, "pack " + fmt_pack(p) + " temperature count")
-            if print_initial:
-                print("Pack " + fmt_pack(p) + ", Total temperature sensors: " + str(temps))
-
-            for i in range(0,temps): #temps-2
-                t_cell[(p-1,i)] = (read_hex(4, "pack " + fmt_pack(p) + " temp " + str(i+1)) - 2730)/10
-                client.publish(config['mqtt_base_topic'] + "/pack_" + fmt_pack(p) + "/temps/temp_" + str(i+1) ,str(round(t_cell[(p-1,i)],1)))
+                #Calculate cells max diff volt
+                cell_max_diff_volt = cell_max_volt - cell_min_volt
+                client.publish(config['mqtt_base_topic'] + "/pack_" + fmt_pack(p) + "/cells_max_diff_calc" ,str(cell_max_diff_volt))
                 if print_initial:
-                    print("Pack " + fmt_pack(p) + ", Temp" + str(i+1) + ": " + str(round(t_cell[(p-1,i)],1)) + " ℃")
+                    print("Pack " + fmt_pack(p) +", Cell Max Diff Volt Calc: " + str(cell_max_diff_volt) + " mV")
+
+                temps = read_hex(2, "pack " + fmt_pack(p) + " temperature count")
+                if print_initial:
+                    print("Pack " + fmt_pack(p) + ", Total temperature sensors: " + str(temps))
+
+                for i in range(0,temps): #temps-2
+                    t_cell[(p-1,i)] = (read_hex(4, "pack " + fmt_pack(p) + " temp " + str(i+1)) - 2730)/10
+                    client.publish(config['mqtt_base_topic'] + "/pack_" + fmt_pack(p) + "/temps/temp_" + str(i+1) ,str(round(t_cell[(p-1,i)],1)))
+                    if print_initial:
+                        print("Pack " + fmt_pack(p) + ", Temp" + str(i+1) + ": " + str(round(t_cell[(p-1,i)],1)) + " ℃")
 
             # t_mos= (int(inc_data[byte_index:byte_index+4],16))/160-273
             # client.publish(config['mqtt_base_topic'] + "/t_mos",str(round(t_mos,1)))
@@ -990,87 +991,97 @@ def bms_getAnalogData(bms,batNumber):
             # if print_initial:
             #     print("T Env: " + str(t_env) + " Deg")
 
-            i_pack.append(read_hex(4, "pack " + fmt_pack(p) + " current"))
-            if i_pack[p-1] >= 32768:
-                i_pack[p-1] -= 65536
-            i_pack[p-1] = i_pack[p-1]/100
-            client.publish(config['mqtt_base_topic'] + "/pack_" + fmt_pack(p) + "/i_pack",str(i_pack[p-1]))
-            if print_initial:
-                print("Pack " + fmt_pack(p) + ", I Pack: " + str(i_pack[p-1]) + " A")
+                i_pack.append(read_hex(4, "pack " + fmt_pack(p) + " current"))
+                if i_pack[p-1] >= 32768:
+                    i_pack[p-1] -= 65536
+                i_pack[p-1] = i_pack[p-1]/100
+                client.publish(config['mqtt_base_topic'] + "/pack_" + fmt_pack(p) + "/i_pack",str(i_pack[p-1]))
+                if print_initial:
+                    print("Pack " + fmt_pack(p) + ", I Pack: " + str(i_pack[p-1]) + " A")
 
-            v_pack.append(read_hex(4, "pack " + fmt_pack(p) + " voltage")/1000)
-            client.publish(config['mqtt_base_topic'] + "/pack_" + fmt_pack(p) + "/v_pack",str(v_pack[p-1]))
-            if print_initial:
-                print("Pack " + fmt_pack(p) + ", V Pack: " + str(v_pack[p-1]) + " V")
+                v_pack.append(read_hex(4, "pack " + fmt_pack(p) + " voltage")/1000)
+                client.publish(config['mqtt_base_topic'] + "/pack_" + fmt_pack(p) + "/v_pack",str(v_pack[p-1]))
+                if print_initial:
+                    print("Pack " + fmt_pack(p) + ", V Pack: " + str(v_pack[p-1]) + " V")
 
-            i_remain_cap.append(read_hex(4, "pack " + fmt_pack(p) + " remaining capacity")*10)
-            client.publish(config['mqtt_base_topic'] + "/pack_" + fmt_pack(p) + "/i_remain_cap",str(i_remain_cap[p-1]))
-            if print_initial:
-                print("Pack " + fmt_pack(p) + ", I Remaining Capacity: " + str(i_remain_cap[p-1]) + " mAh")
+                i_remain_cap.append(read_hex(4, "pack " + fmt_pack(p) + " remaining capacity")*10)
+                client.publish(config['mqtt_base_topic'] + "/pack_" + fmt_pack(p) + "/i_remain_cap",str(i_remain_cap[p-1]))
+                if print_initial:
+                    print("Pack " + fmt_pack(p) + ", I Remaining Capacity: " + str(i_remain_cap[p-1]) + " mAh")
 
-            if byte_index + 2 > len(inc_data):
-                raise ValueError("Truncated analog payload before pack " + fmt_pack(p) + " reserved field")
-            byte_index += 2 # Manual: Define number P = 3
+                if byte_index + 2 > len(inc_data):
+                    raise ValueError("Truncated analog payload before pack " + fmt_pack(p) + " reserved field")
+                byte_index += 2 # Manual: Define number P = 3
 
-            i_full_cap.append(read_hex(4, "pack " + fmt_pack(p) + " full capacity")*10)
-            client.publish(config['mqtt_base_topic'] + "/pack_" + fmt_pack(p) + "/i_full_cap",str(i_full_cap[p-1]))
-            if print_initial:
-                print("Pack " + fmt_pack(p) + ", I Full Capacity: " + str(i_full_cap[p-1]) + " mAh")
+                i_full_cap.append(read_hex(4, "pack " + fmt_pack(p) + " full capacity")*10)
+                client.publish(config['mqtt_base_topic'] + "/pack_" + fmt_pack(p) + "/i_full_cap",str(i_full_cap[p-1]))
+                if print_initial:
+                    print("Pack " + fmt_pack(p) + ", I Full Capacity: " + str(i_full_cap[p-1]) + " mAh")
 
-            if i_full_cap[p-1] > 0:
-                soc.append(round(i_remain_cap[p-1]/i_full_cap[p-1]*100,2))
-            else:
-                if debug_output > 0:
-                    print("Pack " + fmt_pack(p) + ": i_full_cap is 0, forcing SOC to 0")
-                soc.append(0)
-            client.publish(config['mqtt_base_topic'] + "/pack_" + fmt_pack(p) + "/soc",str(soc[p-1]))
-            if print_initial:
-                print("Pack " + fmt_pack(p) + ", SOC: " + str(soc[p-1]) + " %")
+                if i_full_cap[p-1] > 0:
+                    soc.append(round(i_remain_cap[p-1]/i_full_cap[p-1]*100,2))
+                else:
+                    if debug_output > 0:
+                        print("Pack " + fmt_pack(p) + ": i_full_cap is 0, forcing SOC to 0")
+                    soc.append(0)
+                client.publish(config['mqtt_base_topic'] + "/pack_" + fmt_pack(p) + "/soc",str(soc[p-1]))
+                if print_initial:
+                    print("Pack " + fmt_pack(p) + ", SOC: " + str(soc[p-1]) + " %")
 
-            cycles.append(read_hex(4, "pack " + fmt_pack(p) + " cycles"))
-            client.publish(config['mqtt_base_topic'] + "/pack_" + fmt_pack(p) + "/cycles",str(cycles[p-1]))
-            if print_initial:
-                print("Pack " + fmt_pack(p) + ", Cycles: " + str(cycles[p-1]))
+                cycles.append(read_hex(4, "pack " + fmt_pack(p) + " cycles"))
+                client.publish(config['mqtt_base_topic'] + "/pack_" + fmt_pack(p) + "/cycles",str(cycles[p-1]))
+                if print_initial:
+                    print("Pack " + fmt_pack(p) + ", Cycles: " + str(cycles[p-1]))
 
-            i_design_cap.append(read_hex(4, "pack " + fmt_pack(p) + " design capacity")*10)
-            client.publish(config['mqtt_base_topic'] + "/pack_" + fmt_pack(p) + "/i_design_cap",str(i_design_cap[p-1]))
-            if print_initial:
-                print("Pack " + fmt_pack(p) + ", Design Capacity: " + str(i_design_cap[p-1]) + " mAh")
+                i_design_cap.append(read_hex(4, "pack " + fmt_pack(p) + " design capacity")*10)
+                client.publish(config['mqtt_base_topic'] + "/pack_" + fmt_pack(p) + "/i_design_cap",str(i_design_cap[p-1]))
+                if print_initial:
+                    print("Pack " + fmt_pack(p) + ", Design Capacity: " + str(i_design_cap[p-1]) + " mAh")
 
-            if i_design_cap[p-1] > 0:
-                soh.append(round(i_full_cap[p-1]/i_design_cap[p-1]*100,2))
-            else:
-                if debug_output > 0:
-                    print("Pack " + fmt_pack(p) + ": i_design_cap is 0, forcing SOH to 0")
-                soh.append(0)
-            client.publish(config['mqtt_base_topic'] + "/pack_" + fmt_pack(p) + "/soh",str(soh[p-1]))
-            if print_initial:
-                print("Pack " + fmt_pack(p) + ", SOH: " + str(soh[p-1]) + " %")
+                if i_design_cap[p-1] > 0:
+                    soh.append(round(i_full_cap[p-1]/i_design_cap[p-1]*100,2))
+                else:
+                    if debug_output > 0:
+                        print("Pack " + fmt_pack(p) + ": i_design_cap is 0, forcing SOH to 0")
+                    soh.append(0)
+                client.publish(config['mqtt_base_topic'] + "/pack_" + fmt_pack(p) + "/soh",str(soh[p-1]))
+                if print_initial:
+                    print("Pack " + fmt_pack(p) + ", SOH: " + str(soh[p-1]) + " %")
 
-            # Some firmware variants omit this trailing word on the last pack.
-            if byte_index + 2 <= len(inc_data):
-                byte_index += 2
-
-            # Some BMS payloads include extra bytes between pack blocks.
-            # This offset allows manual correction without changing parser logic.
-            byte_index += bms_force_pack_offset
-
-            # Before parsing the next pack, realign byte_index to the next pack marker.
-            # We use the expected cell-count marker as an anchor and scan in 2-byte steps
-            # to skip INFOFLAG/extra words that may appear between packs.
-            if p < packs:
-                aligned = False
-                while byte_index + 2 <= len(inc_data):
-                    if cells == int(inc_data[byte_index:byte_index+2],16):
-                        aligned = True
-                        break
+                # Some firmware variants omit this trailing word on the last pack.
+                if byte_index + 2 <= len(inc_data):
                     byte_index += 2
-                if not aligned:
-                    print("Error parsing BMS analog data: Cannot read multiple packs")
-                    return(False,"Error parsing BMS analog data: Cannot read multiple packs")
+
+                # Some BMS payloads include extra bytes between pack blocks.
+                # This offset allows manual correction without changing parser logic.
+                byte_index += bms_force_pack_offset
+
+                # Before parsing the next pack, realign byte_index to the next pack marker.
+                # We use the expected cell-count marker as an anchor and scan in 2-byte steps
+                # to skip INFOFLAG/extra words that may appear between packs.
+                if p < packs:
+                    aligned = False
+                    while byte_index + 2 <= len(inc_data):
+                        if cells == int(inc_data[byte_index:byte_index+2],16):
+                            aligned = True
+                            break
+                        byte_index += 2
+                    if not aligned:
+                        raise ValueError("Cannot read multiple packs")
+            except ValueError as e:
+                # Some units report a higher pack count than the bytes actually included.
+                # Keep already parsed packs instead of dropping the whole analog cycle.
+                if (p > 1) and ("Truncated analog payload" in str(e)):
+                    packs = p - 1
+                    if debug_output > 0:
+                        print(
+                            "Analog payload truncated at pack " + fmt_pack(p) +
+                            "; publishing parsed data for " + str(packs) + " pack(s) this cycle"
+                        )
+                    break
+                return(False,"Error parsing BMS analog data: " + str(e))
 
     except Exception as e:
-        print("Error parsing BMS analog data: ", str(e))
         return(False,"Error parsing BMS analog data: " + str(e))
 
     if print_initial:
@@ -1303,7 +1314,12 @@ def bms_getWarnInfo(bms):
                 byte_index += 2
 
     except Exception as e:
-        print("Error parsing BMS warning data: ", str(e))
+        # Warning payloads can be short on some firmware revisions.
+        # Skip that warning frame so telemetry keeps flowing for other data paths.
+        if "Truncated warning payload" in str(e):
+            if debug_output > 0:
+                print("Skipping warning frame due to truncated payload: " + str(e))
+            return True, True
         return False, "Error parsing BMS warning data: " + str(e)
 
     return True,True
