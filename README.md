@@ -53,6 +53,7 @@ This includes MQTT/BMS connection settings, retry behavior, parsing options, and
 For IP vs Serial setup (which fields are required for each mode), see `DOCS.md`:
 * `connection_type: IP` requires `bms_ip` and `bms_port`
 * `connection_type: Serial` requires `bms_serial`
+Runtime note: this App runs as root in-container for Serial device compatibility, while keeping App privileges minimal.
 
 ## 4. RJ11 Interface (Typical, confirm your own model!)
 

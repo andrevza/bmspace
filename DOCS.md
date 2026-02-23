@@ -20,6 +20,10 @@ scan_interval: 5
 debug_output: 0
 ```
 
+## Runtime and security notes
+- This App runs as `root` in the container to keep Serial mode (`/dev/ttyUSB*`) reliable across Home Assistant host setups.
+- Even with root runtime, the App is configured with no extra Linux privileges (`privileged: []`) and does not require host networking.
+
 ### Option: `mqtt_host`
 Hostname or IP of the MQTT broker.
 Default: `10.0.0.132`

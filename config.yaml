@@ -4,6 +4,8 @@ version: "3.0.1"
 slug: "bms_pace"
 url: "https://github.com/andrevza/bmspace"
 init: false
+host_network: false
+privileged: []
 arch:
   - aarch64
   - amd64
