@@ -29,7 +29,7 @@ def log_error(message):
 config = {}
 
 if os.path.exists('/data/options.json'):
-    print("Loading options.json")
+    ts_print("Loading options.json")
     with open(r'/data/options.json') as file:
         config = json.load(file)
         safe_config = dict(config)
@@ -39,7 +39,7 @@ if os.path.exists('/data/options.json'):
         print("Config: " + json.dumps(safe_config))
 
 elif os.path.exists('config.yaml'):
-    print("Loading config.yaml")
+    ts_print("Loading config.yaml")
     with open(r'config.yaml') as file:
         config = yaml.load(file, Loader=yaml.FullLoader)['options']
         safe_config = dict(config)
@@ -112,8 +112,8 @@ cells_per_pack = {}
 tcp_rx_buffer = b""
 discovery_meta_topic = config['mqtt_base_topic'] + "/_meta/discovery_topics"
 
-print("Connection Type: " + connection_type)
 ts_print("Starting up... (version " + script_version + ")")
+ts_print("Connection Type: " + connection_type)
 
 def fmt_pack(pack_number):
     if zero_pad_number_packs > 0:
@@ -126,13 +126,13 @@ def fmt_cell(cell_number):
     return str(cell_number)
 
 def on_connect(client, userdata, flags, rc):
-    print("MQTT connected with result code "+str(rc))
+    ts_print("MQTT connected with result code " + str(rc))
     global mqtt_connected
     mqtt_connected = True
     client.publish(config['mqtt_base_topic'] + "/script_version", script_version, qos=0, retain=True)
 
 def on_disconnect(client, userdata, rc):
-    print("MQTT disconnected with result code "+str(rc))
+    ts_print("MQTT disconnected with result code " + str(rc))
     global mqtt_connected
     mqtt_connected = False
 
@@ -154,15 +154,15 @@ def mqtt_connect():
         return True
     except socket.timeout:
         mqtt_connected = False
-        print("MQTT connect timeout to " + config['mqtt_host'] + ":" + str(config['mqtt_port']))
+        ts_print("MQTT connect timeout to " + config['mqtt_host'] + ":" + str(config['mqtt_port']))
         return False
     except OSError as e:
         mqtt_connected = False
-        print("MQTT socket error connecting: %s" % e)
+        ts_print("MQTT socket error connecting: %s" % e)
         return False
     except Exception as e:
         mqtt_connected = False
-        print("MQTT error connecting: %s" % e)
+        ts_print("MQTT error connecting: %s" % e)
         return False
 
 if mqtt_connect():
@@ -170,7 +170,7 @@ if mqtt_connect():
     time.sleep(2)
     client.publish(config['mqtt_base_topic'] + "/script_version", script_version, qos=0, retain=True)
 else:
-    print("MQTT not connected on startup, will retry...")
+    ts_print("MQTT not connected on startup, will retry...")
 
 def graceful_shutdown(reason="shutdown request"):
     global shutdown_started
@@ -187,17 +187,17 @@ def graceful_shutdown(reason="shutdown request"):
     code_running = False
 
     if bms_connected and bms:
-        print("Disconnecting from BMS...")
+        ts_print("Disconnecting from BMS...")
         try:
             bms.close()
-            print("BMS disconnected")
+            ts_print("BMS disconnected")
         except Exception as e:
             log_error("disconnecting BMS: " + str(e))
         bms_connected = False
     else:
-        print("BMS already disconnected")
+        ts_print("BMS already disconnected")
 
-    print("Disconnecting MQTT...")
+    ts_print("Disconnecting MQTT...")
     try:
         client.publish(config['mqtt_base_topic'] + "/availability","offline")
     except Exception as e:
@@ -210,7 +210,7 @@ def graceful_shutdown(reason="shutdown request"):
 
     try:
         client.disconnect()
-        print("MQTT disconnected")
+        ts_print("MQTT disconnected")
     except Exception as e:
         log_error("disconnecting MQTT: " + str(e))
     mqtt_connected = False
@@ -232,25 +232,25 @@ def bms_connect(address, port):
     if connection_type == "Serial":
 
         try:
-            print("trying to connect %s" % bms_serial)
+            ts_print("trying to connect " + bms_serial)
             s = serial.Serial(bms_serial,timeout = 1)
-            print("BMS serial connected")
+            ts_print("BMS serial connected")
             return s, True
         except IOError as msg:
-            print("BMS serial error connecting: %s" % msg)
+            ts_print("BMS serial error connecting: %s" % msg)
             return False, False    
 
     else:
 
         try:
-            print("trying to connect " + address + ":" + str(port))
+            ts_print("trying to connect " + address + ":" + str(port))
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.settimeout(2)
             s.connect((address, port))
-            print("BMS socket connected")
+            ts_print("BMS socket connected")
             return s, True
         except OSError as msg:
-            print("BMS socket error connecting: %s" % msg)
+            ts_print("BMS socket error connecting: %s" % msg)
             return False, False
 
 def bms_connect_with_retries(address, port, max_attempts=None, retry_delay=None):
@@ -265,10 +265,10 @@ def bms_connect_with_retries(address, port, max_attempts=None, retry_delay=None)
         if connected:
             return bms, True
         if attempt < max_attempts:
-            print("BMS connect attempt " + str(attempt) + "/" + str(max_attempts) + " failed, retrying in " + str(retry_delay) + "s...")
+            ts_print("BMS connect attempt " + str(attempt) + "/" + str(max_attempts) + " failed, retrying in " + str(retry_delay) + "s...")
             time.sleep(retry_delay)
 
-    print("BMS connect failed after " + str(max_attempts) + " attempts")
+    ts_print("BMS connect failed after " + str(max_attempts) + " attempts")
     return False, False
 
 def bms_sendData(comms,request=''):
@@ -293,7 +293,7 @@ def bms_sendData(comms,request=''):
                 time.sleep(0.25)
                 return True
         except Exception as e:
-            print("BMS socket error: %s" % e)
+            ts_print("BMS socket error: %s" % e)
             # global bms_connected
             return False
 
@@ -342,11 +342,11 @@ def bms_get_data(comms):
                     else:
                         tcp_rx_buffer = b""
 
-            print("BMS socket receive timeout waiting for full frame")
+            ts_print("BMS socket receive timeout waiting for full frame")
             return False
         return inc_data
     except Exception as e:
-        print("BMS socket receive error: %s" % e)
+        ts_print("BMS socket receive error: %s" % e)
         # global bms_connected
         return False
 
@@ -961,7 +961,7 @@ def bms_getVersion(comms, reported_packs=1):
     try:
         bms_version = bytes.fromhex(INFO.decode("ascii")).decode("ASCII")
         client.publish(config['mqtt_base_topic'] + "/bms_version",bms_version)
-        print("BMS Version: " + bms_version)
+        ts_print("BMS Version: " + bms_version)
     except:
         return(False,"Error extracting BMS version")
 
@@ -982,8 +982,8 @@ def bms_getSerial(comms, reported_packs=1):
         pack_sn = bytes.fromhex(INFO[40:68].decode("ascii")).decode("ASCII").replace(" ", "")
         client.publish(config['mqtt_base_topic'] + "/bms_sn",bms_sn)
         client.publish(config['mqtt_base_topic'] + "/pack_sn",pack_sn)
-        print("BMS Serial Number: " + bms_sn)
-        print("Pack Serial Number: " + pack_sn)
+        ts_print("BMS Serial Number: " + bms_sn)
+        ts_print("Pack Serial Number: " + pack_sn)
 
     except:
         return(False,"Error extracting BMS version", False)
@@ -1419,7 +1419,7 @@ def bms_getWarnInfo(bms):
     return True,True
 
 
-print("Connecting to BMS...")
+ts_print("Connecting to BMS...")
 bms,bms_connected = bms_connect_with_retries(bms_ip,bms_port)
 if bms_connected != True:
     # Startup cannot continue without BMS transport.
@@ -1437,7 +1437,7 @@ if success == True:
     if packs_to_read > 0:
         reported_packs = min(reported_packs, packs_to_read)
         ts_print("packs_to_read override active, using reported_packs=" + str(reported_packs))
-    print("Batteries in pack: ", data)
+    ts_print("Batteries in pack: " + str(data))
 else:
     log_error("Retrieving number of batteries in pack")
 
@@ -1484,13 +1484,13 @@ while code_running == True:
         
         else: #MQTT not connected
             client.loop_stop()
-            print("MQTT disconnected, trying to reconnect...")
+            ts_print("MQTT disconnected, trying to reconnect...")
             if mqtt_connect():
                 client.loop_start()
             time.sleep(5)
             print_initial = True
     else: #BMS not connected
-        print("BMS disconnected, trying to reconnect...")
+        ts_print("BMS disconnected, trying to reconnect...")
         bms,bms_connected = bms_connect_with_retries(bms_ip,bms_port)
         if bms_connected != True:
             sys.exit("Unable to reconnect to BMS after retries, exiting")
