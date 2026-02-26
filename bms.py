@@ -9,6 +9,7 @@ import atexit
 import sys
 import signal
 import logging
+import platform
 import constants
 
 logging.basicConfig(
@@ -23,8 +24,6 @@ def ts_print(message):
 
 def log_error(message):
     logger.error(str(message))
-
-ts_print("Starting up...")
 
 config = {}
 
@@ -53,6 +52,7 @@ else:
 
 
 scan_interval = config['scan_interval']
+script_version = os.getenv("SUPERVISOR_ADDON_VERSION", os.getenv("ADDON_VERSION", "dev"))
 connection_type = config.get('connection_type', 'IP')
 bms_ip = str(config.get('bms_ip', '')).strip()
 bms_serial = str(config.get('bms_serial', '')).strip()
@@ -82,6 +82,11 @@ zero_pad_number_packs = max(0, int(config.get('zero_pad_number_packs', 0)))
 # Retry values are optional in config; defaults keep backward compatibility.
 bms_connect_retries = max(1, int(config.get('bms_connect_retries', 5)))
 bms_connect_retry_delay = max(1, int(config.get('bms_connect_retry_delay', 5)))
+mqtt_client_id = str(config.get('mqtt_client_id', '')).strip()
+if not mqtt_client_id:
+    mqtt_client_id = "bmspace-" + platform.node().strip().replace(" ", "-")
+# Optional pack-count cap; 0 means auto-detect/use payload count.
+packs_to_read = max(0, int(config.get('packs_to_read', 0)))
 code_running = True
 bms_connected = False
 mqtt_connected = False
@@ -102,6 +107,7 @@ temps = 6
 tcp_rx_buffer = b""
 
 print("Connection Type: " + connection_type)
+ts_print("Starting up... (version " + script_version + ")")
 
 def fmt_pack(pack_number):
     if zero_pad_number_packs > 0:
@@ -117,13 +123,14 @@ def on_connect(client, userdata, flags, rc):
     print("MQTT connected with result code "+str(rc))
     global mqtt_connected
     mqtt_connected = True
+    client.publish(config['mqtt_base_topic'] + "/script_version", script_version, qos=0, retain=True)
 
 def on_disconnect(client, userdata, rc):
     print("MQTT disconnected with result code "+str(rc))
     global mqtt_connected
     mqtt_connected = False
 
-client = mqtt.Client()
+client = mqtt.Client(client_id=mqtt_client_id)
 client.on_connect = on_connect
 client.on_disconnect = on_disconnect
 #client.on_message = on_message
@@ -131,6 +138,7 @@ client.on_disconnect = on_disconnect
 # LWT must be set before connect() so broker can register it for unexpected disconnects.
 client.will_set(config['mqtt_base_topic'] + "/availability","offline", qos=0, retain=False)
 client.username_pw_set(username=config['mqtt_user'], password=config['mqtt_password'])
+ts_print("MQTT client_id: " + mqtt_client_id)
 
 def mqtt_connect():
     # Wrapper used by startup and reconnect loop to keep connect error handling in one place.
@@ -154,6 +162,7 @@ def mqtt_connect():
 if mqtt_connect():
     client.loop_start()
     time.sleep(2)
+    client.publish(config['mqtt_base_topic'] + "/script_version", script_version, qos=0, retain=True)
 else:
     print("MQTT not connected on startup, will retry...")
 
@@ -562,6 +571,14 @@ def ha_discovery():
         disc_payload['unit_of_measurement'] = "%"
         publish_discovery(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
 
+        # Runtime/build metadata for troubleshooting and release validation.
+        disc_payload.pop('unit_of_measurement', None)
+        disc_payload['entity_category'] = "diagnostic"
+        disc_payload['name'] = "Script Version"
+        disc_payload['unique_id'] = "bmspace_" + bms_sn + "_script_version"
+        disc_payload['state_topic'] = config['mqtt_base_topic'] + "/script_version"
+        publish_discovery(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
+
         ts_print("Finished - Publishing HA Discovery topic")
 
     else:
@@ -906,7 +923,15 @@ def bms_getAnalogData(bms,batNumber):
             byte_index += length
             return int(raw,16)
 
-        packs = read_hex(2, "packs")
+        payload_packs = read_hex(2, "packs")
+        packs = payload_packs
+        if packs_to_read > 0:
+            packs = min(payload_packs, packs_to_read)
+            if debug_output > 0:
+                ts_print(
+                    "Analog parsing pack cap active: payload packs="
+                    + str(payload_packs) + ", reading packs=" + str(packs)
+                )
         if print_initial:
             print("Packs: " + str(packs))
 
@@ -1137,7 +1162,15 @@ def bms_getWarnInfo(bms):
         def decode_warn(code):
             return constants.warningStates.get(code, "state 0x" + code.decode("ascii"))
 
-        packsW = int(read_token(2, "packs"),16)
+        payload_packsW = int(read_token(2, "packs"),16)
+        packsW = payload_packsW
+        if packs_to_read > 0:
+            packsW = min(payload_packsW, packs_to_read)
+            if debug_output > 0:
+                ts_print(
+                    "Warning parsing pack cap active: payload packs="
+                    + str(payload_packsW) + ", reading packs=" + str(packsW)
+                )
         if print_initial:
             print("Packs for warnings: " + str(packsW))
 
@@ -1292,6 +1325,9 @@ time.sleep(0.1)
 success, data = bms_getPackNumber(bms)
 if success == True:
     reported_packs = data
+    if packs_to_read > 0:
+        reported_packs = min(reported_packs, packs_to_read)
+        ts_print("packs_to_read override active, using reported_packs=" + str(reported_packs))
     print("Batteries in pack: ", data)
 else:
     log_error("Retrieving number of batteries in pack")

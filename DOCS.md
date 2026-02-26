@@ -33,6 +33,11 @@ MQTT broker TCP port.
 Must be a valid port number (`1`-`65535`).
 Default: `1883`
 
+### Option: `mqtt_client_id` (optional)
+Explicit MQTT client ID.
+If empty, a stable default is generated (`bmspace-<hostname>`).
+Default: empty (auto-generated)
+
 ### Option: `mqtt_user`
 MQTT username.
 Default: `mqtt-users`
@@ -98,6 +103,11 @@ Default when omitted: `5` seconds (minimum `1`)
 ### Option: `force_pack_offset` (optional)
 Manual byte offset between multi-pack analog blocks for devices that report
 misaligned payloads. Keep `0` unless multi-pack parsing is misaligned.
+Default: `0`
+
+### Option: `packs_to_read` (optional)
+Cap number of packs parsed/published each cycle.
+Use `0` for auto-detect/full payload.
 Default: `0`
 
 ### Option: `zero_pad_number_cells` (optional)

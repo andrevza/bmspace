@@ -32,6 +32,7 @@ options:
 schema:
   mqtt_host: "str"
   mqtt_port: "port"
+  mqtt_client_id: "str?"
   mqtt_user: "str"
   mqtt_password: "password"
   mqtt_ha_discovery: "bool"
@@ -46,5 +47,6 @@ schema:
   bms_connect_retries: "int?"
   bms_connect_retry_delay: "int?"
   force_pack_offset: "int?"
+  packs_to_read: "int?"
   zero_pad_number_cells: "int?"
   zero_pad_number_packs: "int?"
