@@ -739,6 +739,12 @@ def cid2_rtn(rtn):
     elif rtn == b'09':
         return True, "RTN Error 09: Operation or write error"
     else:
+        # Any non-00 RTN not explicitly mapped should still be treated as an error.
+        if rtn != b'00':
+            try:
+                return True, "RTN Error " + rtn.decode("ascii") + ": Unmapped RTN code"
+            except Exception:
+                return True, "RTN Error: Unmapped RTN code"
         return False, False
 
 def bms_parse_data(inc_data):
