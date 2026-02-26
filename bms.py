@@ -103,6 +103,7 @@ pack_sn = ''
 packs = 1
 cells = 13
 temps = 6
+cells_per_pack = {}
 # Persistent TCP receive buffer for partial/combined socket frames.
 tcp_rx_buffer = b""
 
@@ -347,6 +348,7 @@ def bms_get_data(comms):
 def ha_discovery():
     global ha_discovery_enabled
     global packs
+    global cells_per_pack
     fmt_pack = globals().get("fmt_pack", lambda n: str(n))
     fmt_cell = globals().get("fmt_cell", lambda n: str(n))
 
@@ -376,7 +378,12 @@ def ha_discovery():
             # Core telemetry entities remain regular sensors.
             disc_payload.pop('entity_category', None)
 
-            for i in range(0,cells):
+            # Use actual cell count for this pack when available.
+            pack_cells = int(cells_per_pack.get(p, cells))
+            if pack_cells < 1:
+                pack_cells = cells
+
+            for i in range(0,pack_cells):
                 disc_payload['name'] = "Pack " + fmt_pack(p) + " Cell " + fmt_cell(i+1) + " Voltage"
                 disc_payload['unique_id'] = "bmspace_" + bms_sn + "_pack_" + fmt_pack(p) + "_v_cell_" + fmt_cell(i+1)
                 disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_" + fmt_pack(p) + "/v_cells/cell_" + fmt_cell(i+1)
@@ -891,6 +898,7 @@ def bms_getAnalogData(bms,batNumber):
     global cells
     global temps
     global packs
+    global cells_per_pack
     fmt_pack = globals().get("fmt_pack", lambda n: str(n))
     fmt_cell = globals().get("fmt_cell", lambda n: str(n))
     byte_index = 2
@@ -937,12 +945,14 @@ def bms_getAnalogData(bms,batNumber):
 
         v_cell = {}
         t_cell = {}
+        next_cells_per_pack = {}
 
         for p in range(1,packs+1):
             try:
                 # Each pack block starts with its cell-count marker.
                 # We read this marker first, then parse that many cell voltages.
                 cells = read_hex(2, "pack " + fmt_pack(p) + " cell count")
+                next_cells_per_pack[p] = cells
 
                 if print_initial:
                     print("Pack " + fmt_pack(p) + ", Total cells: " + str(cells))
@@ -1064,6 +1074,7 @@ def bms_getAnalogData(bms,batNumber):
                 # Keep already parsed packs instead of dropping the whole analog cycle.
                 if (p > 1) and ("Truncated analog payload" in str(e)):
                     packs = p - 1
+                    next_cells_per_pack = {k: v for k, v in next_cells_per_pack.items() if k <= packs}
                     if debug_output > 0:
                         print(
                             "Analog payload truncated at pack " + fmt_pack(p) +
@@ -1071,6 +1082,7 @@ def bms_getAnalogData(bms,batNumber):
                         )
                     break
                 return(False,"Error parsing BMS analog data: " + str(e))
+        cells_per_pack = next_cells_per_pack
 
     except Exception as e:
         return(False,"Error parsing BMS analog data: " + str(e))
