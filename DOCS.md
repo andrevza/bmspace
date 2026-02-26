@@ -51,6 +51,11 @@ Default: `mqtt-users`
 Enable Home Assistant MQTT discovery entity publishing.
 Default: `true`
 
+### Option: `mqtt_discovery_cleanup_startup` (optional)
+Remove stale retained MQTT discovery config topics once at startup.
+Keep enabled to clean up entities that no longer exist after topic/entity changes.
+Default: `true`
+
 ### Option: `mqtt_ha_discovery_topic`
 Home Assistant MQTT discovery prefix topic.  
 Default: `homeassistant`

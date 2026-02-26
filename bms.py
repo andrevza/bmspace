@@ -10,6 +10,7 @@ import sys
 import signal
 import logging
 import platform
+import threading
 import constants
 
 logging.basicConfig(
@@ -87,6 +88,8 @@ if not mqtt_client_id:
     mqtt_client_id = "bmspace-" + platform.node().strip().replace(" ", "-")
 # Optional pack-count cap; 0 means auto-detect/use payload count.
 packs_to_read = max(0, int(config.get('packs_to_read', 0)))
+# Cleanup stale retained discovery config topics once at startup.
+mqtt_discovery_cleanup_startup = bool(config.get('mqtt_discovery_cleanup_startup', True))
 code_running = True
 bms_connected = False
 mqtt_connected = False
@@ -96,6 +99,7 @@ print_initial = True
 debug_output = config['debug_output']
 disc_payload = {}
 repub_discovery = 0
+discovery_cleanup_done = False
 
 bms_version = ''
 bms_sn = ''
@@ -106,6 +110,7 @@ temps = 6
 cells_per_pack = {}
 # Persistent TCP receive buffer for partial/combined socket frames.
 tcp_rx_buffer = b""
+discovery_meta_topic = config['mqtt_base_topic'] + "/_meta/discovery_topics"
 
 print("Connection Type: " + connection_type)
 ts_print("Starting up... (version " + script_version + ")")
@@ -345,7 +350,82 @@ def bms_get_data(comms):
         # global bms_connected
         return False
 
-def ha_discovery():
+def _mqtt_get_retained_payload(topic, timeout=2.0):
+    # Read one retained message for a specific topic using the running MQTT loop.
+    result = {"received": False, "payload": None}
+    done = threading.Event()
+
+    def _on_meta_message(client, userdata, msg):
+        result["received"] = True
+        result["payload"] = msg.payload
+        done.set()
+
+    try:
+        client.message_callback_add(topic, _on_meta_message)
+        client.subscribe(topic, qos=0)
+        done.wait(timeout)
+    finally:
+        try:
+            client.unsubscribe(topic)
+        except Exception:
+            pass
+        try:
+            client.message_callback_remove(topic)
+        except Exception:
+            pass
+
+    if result["received"]:
+        return result["payload"]
+    return None
+
+
+def _load_previous_discovery_topics():
+    payload = _mqtt_get_retained_payload(discovery_meta_topic, timeout=2.0)
+    if not payload:
+        return set()
+    try:
+        data = json.loads(payload.decode("utf-8"))
+        if isinstance(data, list):
+            return {str(topic) for topic in data if isinstance(topic, str)}
+    except Exception as e:
+        if debug_output > 0:
+            log_error("parsing discovery meta topic payload: " + str(e))
+    return set()
+
+
+def cleanup_discovery_topics_once():
+    global discovery_cleanup_done
+
+    if discovery_cleanup_done:
+        return
+    if not ha_discovery_enabled:
+        discovery_cleanup_done = True
+        return
+    if not mqtt_discovery_cleanup_startup:
+        discovery_cleanup_done = True
+        return
+    if not mqtt_connected:
+        return
+
+    try:
+        current_topics = ha_discovery(dry_run=True)
+        previous_topics = _load_previous_discovery_topics()
+        stale_topics = sorted(previous_topics - current_topics)
+
+        if len(stale_topics) > 0:
+            ts_print("MQTT discovery cleanup removing " + str(len(stale_topics)) + " stale topic(s)")
+            for topic in stale_topics:
+                if debug_output >= 1:
+                    print("HA discovery cleanup remove: " + topic)
+                # Empty retained payload deletes stale discovery config.
+                client.publish(topic, "", qos=0, retain=True)
+        elif debug_output > 0:
+            ts_print("MQTT discovery cleanup found no stale topics")
+    finally:
+        discovery_cleanup_done = True
+
+
+def ha_discovery(dry_run=False):
     global ha_discovery_enabled
     global packs
     global cells_per_pack
@@ -354,9 +434,14 @@ def ha_discovery():
 
     if ha_discovery_enabled:
         
-        ts_print("Publishing HA Discovery topic...")
+        if not dry_run:
+            ts_print("Publishing HA Discovery topic...")
+        current_discovery_topics = set()
 
         def publish_discovery(topic, payload, qos=0, retain=True):
+            current_discovery_topics.add(topic)
+            if dry_run:
+                return
             # In debug mode, print each discovery entity so users can trace what was published to MQTT.
             if debug_output >= 1:
                 entity_name = disc_payload.get('name', 'unknown')
@@ -586,10 +671,22 @@ def ha_discovery():
         disc_payload['state_topic'] = config['mqtt_base_topic'] + "/script_version"
         publish_discovery(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
 
+        if dry_run:
+            return current_discovery_topics
+
+        # Persist current discovery topic set so next startup can remove stale entities.
+        client.publish(
+            discovery_meta_topic,
+            json.dumps(sorted(current_discovery_topics)),
+            qos=0,
+            retain=True
+        )
+
         ts_print("Finished - Publishing HA Discovery topic")
 
     else:
         print("HA Discovery Disabled")
+        return set()
 
 def chksum_calc(data):
     global debug_output
@@ -1375,6 +1472,7 @@ while code_running == True:
             # Only publish discovery after a valid analog frame, so HA entities match real pack/cell data
             # and we avoid creating incomplete entities when multi-pack parsing fails in that cycle.
             if print_initial and analog_success:
+                cleanup_discovery_topics_once()
                 ha_discovery()
                 
             client.publish(config['mqtt_base_topic'] + "/availability","online")
