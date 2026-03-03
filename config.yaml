@@ -38,7 +38,7 @@ schema:
   bms_port: "port?"
   bms_serial: "str?"
   scan_interval: "int?"
-  debug_output: "int?"
+  debug_output: "list(0|1|2|3)?"
   mqtt_discovery_cleanup_startup: "bool?"
   strict_unknown_rtn: "bool?"
   warning_state_max_len: "int?"

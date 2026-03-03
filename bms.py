@@ -123,7 +123,16 @@ mqtt_connected = False
 bms = None
 shutdown_started = False
 print_initial = True
-debug_output = max(0, int(config.get('debug_output', 0)))
+raw_debug_output = config.get('debug_output', 0)
+try:
+    debug_output = int(raw_debug_output)
+except (TypeError, ValueError):
+    debug_output = 0
+    ts_print("Invalid debug_output value '" + str(raw_debug_output) + "', defaulting to 0")
+clamped_debug_output = min(3, max(0, debug_output))
+if clamped_debug_output != debug_output:
+    ts_print("debug_output " + str(debug_output) + " out of range, clamped to " + str(clamped_debug_output))
+debug_output = clamped_debug_output
 disc_payload = {}
 repub_discovery = 0
 discovery_republish_pending = False
