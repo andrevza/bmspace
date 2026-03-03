@@ -610,6 +610,55 @@ def ha_discovery(dry_run=False, log_publish=True):
             disc_payload['payload_off'] = "0"
             publish_discovery(config['mqtt_ha_discovery_topic']+"/binary_sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
 
+            disc_payload['name'] = "Pack " + fmt_pack(p) + " Protection Above Charge Temp"
+            disc_payload['unique_id'] = "bmspace_" + bms_sn + "_pack_" + fmt_pack(p) + "_prot_above_charge_temp"
+            disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_" + fmt_pack(p) + "/prot_above_charge_temp"
+            disc_payload['payload_on'] = "1"
+            disc_payload['payload_off'] = "0"
+            publish_discovery(config['mqtt_ha_discovery_topic']+"/binary_sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
+
+            disc_payload['name'] = "Pack " + fmt_pack(p) + " Protection Above Discharge Temp"
+            disc_payload['unique_id'] = "bmspace_" + bms_sn + "_pack_" + fmt_pack(p) + "_prot_above_discharge_temp"
+            disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_" + fmt_pack(p) + "/prot_above_discharge_temp"
+            disc_payload['payload_on'] = "1"
+            disc_payload['payload_off'] = "0"
+            publish_discovery(config['mqtt_ha_discovery_topic']+"/binary_sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
+
+            disc_payload['name'] = "Pack " + fmt_pack(p) + " Protection Low Charge Temp"
+            disc_payload['unique_id'] = "bmspace_" + bms_sn + "_pack_" + fmt_pack(p) + "_prot_low_charge_temp"
+            disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_" + fmt_pack(p) + "/prot_low_charge_temp"
+            disc_payload['payload_on'] = "1"
+            disc_payload['payload_off'] = "0"
+            publish_discovery(config['mqtt_ha_discovery_topic']+"/binary_sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
+
+            disc_payload['name'] = "Pack " + fmt_pack(p) + " Protection Low Discharge Temp"
+            disc_payload['unique_id'] = "bmspace_" + bms_sn + "_pack_" + fmt_pack(p) + "_prot_low_discharge_temp"
+            disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_" + fmt_pack(p) + "/prot_low_discharge_temp"
+            disc_payload['payload_on'] = "1"
+            disc_payload['payload_off'] = "0"
+            publish_discovery(config['mqtt_ha_discovery_topic']+"/binary_sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
+
+            disc_payload['name'] = "Pack " + fmt_pack(p) + " Protection Above MOS Temp"
+            disc_payload['unique_id'] = "bmspace_" + bms_sn + "_pack_" + fmt_pack(p) + "_prot_above_mos_temp"
+            disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_" + fmt_pack(p) + "/prot_above_mos_temp"
+            disc_payload['payload_on'] = "1"
+            disc_payload['payload_off'] = "0"
+            publish_discovery(config['mqtt_ha_discovery_topic']+"/binary_sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
+
+            disc_payload['name'] = "Pack " + fmt_pack(p) + " Protection Above Env Temp"
+            disc_payload['unique_id'] = "bmspace_" + bms_sn + "_pack_" + fmt_pack(p) + "_prot_above_env_temp"
+            disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_" + fmt_pack(p) + "/prot_above_env_temp"
+            disc_payload['payload_on'] = "1"
+            disc_payload['payload_off'] = "0"
+            publish_discovery(config['mqtt_ha_discovery_topic']+"/binary_sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
+
+            disc_payload['name'] = "Pack " + fmt_pack(p) + " Protection Low Env Temp"
+            disc_payload['unique_id'] = "bmspace_" + bms_sn + "_pack_" + fmt_pack(p) + "_prot_low_env_temp"
+            disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_" + fmt_pack(p) + "/prot_low_env_temp"
+            disc_payload['payload_on'] = "1"
+            disc_payload['payload_off'] = "0"
+            publish_discovery(config['mqtt_ha_discovery_topic']+"/binary_sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
+
             disc_payload['name'] = "Pack " + fmt_pack(p) + " Current Limit"
             disc_payload['unique_id'] = "bmspace_" + bms_sn + "_pack_" + fmt_pack(p) + "_current_limit"
             disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_" + fmt_pack(p) + "/current_limit"
@@ -655,6 +704,76 @@ def ha_discovery(dry_run=False, log_publish=True):
             disc_payload['name'] = "Pack " + fmt_pack(p) + " Heart"
             disc_payload['unique_id'] = "bmspace_" + bms_sn + "_pack_" + fmt_pack(p) + "_heart"
             disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_" + fmt_pack(p) + "/heart"
+            disc_payload['payload_on'] = "1"
+            disc_payload['payload_off'] = "0"
+            publish_discovery(config['mqtt_ha_discovery_topic']+"/binary_sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
+
+            disc_payload['name'] = "Pack " + fmt_pack(p) + " Low Power Warn"
+            disc_payload['unique_id'] = "bmspace_" + bms_sn + "_pack_" + fmt_pack(p) + "_warn_low_power"
+            disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_" + fmt_pack(p) + "/warn_low_power"
+            disc_payload['payload_on'] = "1"
+            disc_payload['payload_off'] = "0"
+            publish_discovery(config['mqtt_ha_discovery_topic']+"/binary_sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
+
+            disc_payload['name'] = "Pack " + fmt_pack(p) + " Warn Charge Current"
+            disc_payload['unique_id'] = "bmspace_" + bms_sn + "_pack_" + fmt_pack(p) + "_warn_charge_current"
+            disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_" + fmt_pack(p) + "/warn_charge_current"
+            disc_payload['payload_on'] = "1"
+            disc_payload['payload_off'] = "0"
+            publish_discovery(config['mqtt_ha_discovery_topic']+"/binary_sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
+
+            disc_payload['name'] = "Pack " + fmt_pack(p) + " Warn Discharge Current"
+            disc_payload['unique_id'] = "bmspace_" + bms_sn + "_pack_" + fmt_pack(p) + "_warn_discharge_current"
+            disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_" + fmt_pack(p) + "/warn_discharge_current"
+            disc_payload['payload_on'] = "1"
+            disc_payload['payload_off'] = "0"
+            publish_discovery(config['mqtt_ha_discovery_topic']+"/binary_sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
+
+            disc_payload['name'] = "Pack " + fmt_pack(p) + " Warn Above Charge Temp"
+            disc_payload['unique_id'] = "bmspace_" + bms_sn + "_pack_" + fmt_pack(p) + "_warn_above_charge_temp"
+            disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_" + fmt_pack(p) + "/warn_above_charge_temp"
+            disc_payload['payload_on'] = "1"
+            disc_payload['payload_off'] = "0"
+            publish_discovery(config['mqtt_ha_discovery_topic']+"/binary_sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
+
+            disc_payload['name'] = "Pack " + fmt_pack(p) + " Warn Above Discharge Temp"
+            disc_payload['unique_id'] = "bmspace_" + bms_sn + "_pack_" + fmt_pack(p) + "_warn_above_discharge_temp"
+            disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_" + fmt_pack(p) + "/warn_above_discharge_temp"
+            disc_payload['payload_on'] = "1"
+            disc_payload['payload_off'] = "0"
+            publish_discovery(config['mqtt_ha_discovery_topic']+"/binary_sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
+
+            disc_payload['name'] = "Pack " + fmt_pack(p) + " Warn Low Charge Temp"
+            disc_payload['unique_id'] = "bmspace_" + bms_sn + "_pack_" + fmt_pack(p) + "_warn_low_charge_temp"
+            disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_" + fmt_pack(p) + "/warn_low_charge_temp"
+            disc_payload['payload_on'] = "1"
+            disc_payload['payload_off'] = "0"
+            publish_discovery(config['mqtt_ha_discovery_topic']+"/binary_sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
+
+            disc_payload['name'] = "Pack " + fmt_pack(p) + " Warn Low Discharge Temp"
+            disc_payload['unique_id'] = "bmspace_" + bms_sn + "_pack_" + fmt_pack(p) + "_warn_low_discharge_temp"
+            disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_" + fmt_pack(p) + "/warn_low_discharge_temp"
+            disc_payload['payload_on'] = "1"
+            disc_payload['payload_off'] = "0"
+            publish_discovery(config['mqtt_ha_discovery_topic']+"/binary_sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
+
+            disc_payload['name'] = "Pack " + fmt_pack(p) + " Warn High Env Temp"
+            disc_payload['unique_id'] = "bmspace_" + bms_sn + "_pack_" + fmt_pack(p) + "_warn_high_env_temp"
+            disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_" + fmt_pack(p) + "/warn_high_env_temp"
+            disc_payload['payload_on'] = "1"
+            disc_payload['payload_off'] = "0"
+            publish_discovery(config['mqtt_ha_discovery_topic']+"/binary_sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
+
+            disc_payload['name'] = "Pack " + fmt_pack(p) + " Warn Low Env Temp"
+            disc_payload['unique_id'] = "bmspace_" + bms_sn + "_pack_" + fmt_pack(p) + "_warn_low_env_temp"
+            disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_" + fmt_pack(p) + "/warn_low_env_temp"
+            disc_payload['payload_on'] = "1"
+            disc_payload['payload_off'] = "0"
+            publish_discovery(config['mqtt_ha_discovery_topic']+"/binary_sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
+
+            disc_payload['name'] = "Pack " + fmt_pack(p) + " Warn High MOS Temp"
+            disc_payload['unique_id'] = "bmspace_" + bms_sn + "_pack_" + fmt_pack(p) + "_warn_high_mos_temp"
+            disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_" + fmt_pack(p) + "/warn_high_mos_temp"
             disc_payload['payload_on'] = "1"
             disc_payload['payload_off'] = "0"
             publish_discovery(config['mqtt_ha_discovery_topic']+"/binary_sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
@@ -1392,6 +1511,13 @@ def bms_getWarnInfo(bms):
                         warnings += constants.protectState2[x+1] + " | "
                 warnings = warnings.rstrip("| ")
                 warnings += ", "
+            client.publish(config['mqtt_base_topic'] + "/pack_" + fmt_pack(p) + "/prot_above_charge_temp", str(protectState2>>0 & 1))
+            client.publish(config['mqtt_base_topic'] + "/pack_" + fmt_pack(p) + "/prot_above_discharge_temp", str(protectState2>>1 & 1))
+            client.publish(config['mqtt_base_topic'] + "/pack_" + fmt_pack(p) + "/prot_low_charge_temp", str(protectState2>>2 & 1))
+            client.publish(config['mqtt_base_topic'] + "/pack_" + fmt_pack(p) + "/prot_low_discharge_temp", str(protectState2>>3 & 1))
+            client.publish(config['mqtt_base_topic'] + "/pack_" + fmt_pack(p) + "/prot_above_mos_temp", str(protectState2>>4 & 1))
+            client.publish(config['mqtt_base_topic'] + "/pack_" + fmt_pack(p) + "/prot_above_env_temp", str(protectState2>>5 & 1))
+            client.publish(config['mqtt_base_topic'] + "/pack_" + fmt_pack(p) + "/prot_low_env_temp", str(protectState2>>6 & 1))
             client.publish(config['mqtt_base_topic'] + "/pack_" + fmt_pack(p) + "/fully",str(protectState2>>7 & 1))  
 
             instructionState = int(read_token(2, "pack " + fmt_pack(p) + " instructionState"),16)
@@ -1426,6 +1552,8 @@ def bms_getWarnInfo(bms):
             balanceState2 = '{0:08b}'.format(int(read_token(2, "pack " + fmt_pack(p) + " balancing2"),16))
 
             warnState1 = int(read_token(2, "pack " + fmt_pack(p) + " warnState1"),16)
+            client.publish(config['mqtt_base_topic'] + "/pack_" + fmt_pack(p) + "/warn_charge_current", str(warnState1>>4 & 1))
+            client.publish(config['mqtt_base_topic'] + "/pack_" + fmt_pack(p) + "/warn_discharge_current", str(warnState1>>5 & 1))
             if warnState1 > 0:
                 warnings += "Warning State 1: "
                 for x in range(0,8):
@@ -1435,6 +1563,15 @@ def bms_getWarnInfo(bms):
                 warnings += ", "  
 
             warnState2 = int(read_token(2, "pack " + fmt_pack(p) + " warnState2"),16)
+            client.publish(config['mqtt_base_topic'] + "/pack_" + fmt_pack(p) + "/warn_above_charge_temp", str(warnState2>>0 & 1))
+            client.publish(config['mqtt_base_topic'] + "/pack_" + fmt_pack(p) + "/warn_above_discharge_temp", str(warnState2>>1 & 1))
+            client.publish(config['mqtt_base_topic'] + "/pack_" + fmt_pack(p) + "/warn_low_charge_temp", str(warnState2>>2 & 1))
+            client.publish(config['mqtt_base_topic'] + "/pack_" + fmt_pack(p) + "/warn_low_discharge_temp", str(warnState2>>3 & 1))
+            client.publish(config['mqtt_base_topic'] + "/pack_" + fmt_pack(p) + "/warn_high_env_temp", str(warnState2>>4 & 1))
+            client.publish(config['mqtt_base_topic'] + "/pack_" + fmt_pack(p) + "/warn_low_env_temp", str(warnState2>>5 & 1))
+            client.publish(config['mqtt_base_topic'] + "/pack_" + fmt_pack(p) + "/warn_high_mos_temp", str(warnState2>>6 & 1))
+            # warnState2 bit 7 (key 8 in constants.warnState2) is "Low power warn".
+            client.publish(config['mqtt_base_topic'] + "/pack_" + fmt_pack(p) + "/warn_low_power", str(warnState2>>7 & 1))
             if warnState2 > 0:
                 warnings += "Warning State 2: "
                 for x in range(0,8):
