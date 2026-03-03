@@ -88,6 +88,9 @@ if not mqtt_client_id:
     mqtt_client_id = "bmspace-" + platform.node().strip().replace(" ", "-")
 # Optional pack-count cap; 0 means auto-detect/use payload count.
 packs_to_read = max(0, int(config.get('packs_to_read', 0)))
+# Keep warning sensor state within Home Assistant max state length constraints.
+# HA sensor state max length is 255, so clamp user config into a safe range.
+warning_state_max_len = min(255, max(16, int(config.get('warning_state_max_len', 250))))
 # If true, fail on unknown non-zero RTN codes. Default false for compatibility with noisy/variant devices.
 strict_unknown_rtn = bool(config.get('strict_unknown_rtn', False))
 # Cleanup stale retained discovery config topics once at startup.
@@ -1301,6 +1304,8 @@ def bms_getWarnInfo(bms):
         for p in range(1,packsW+1):
 
             cellsW = int(read_token(2, "pack " + fmt_pack(p) + " cell count"),16)
+            if (cellsW < 1) or (cellsW > 64):
+                raise ValueError("Unreasonable warning payload count: cellsW=" + str(cellsW))
 
             for c in range(1,cellsW+1):
                 warn_code = read_token(2, "pack " + fmt_pack(p) + " cell " + str(c) + " warn")
@@ -1309,6 +1314,8 @@ def bms_getWarnInfo(bms):
                     warnings += "cell " + str(c) + " " + warn + ", "
 
             tempsW = int(read_token(2, "pack " + fmt_pack(p) + " temp count"),16)
+            if (tempsW < 0) or (tempsW > 64):
+                raise ValueError("Unreasonable warning payload count: tempsW=" + str(tempsW))
         
             for t in range(1,tempsW+1):
                 warn_code = read_token(2, "pack " + fmt_pack(p) + " temp " + str(t) + " warn")
@@ -1403,6 +1410,16 @@ def bms_getWarnInfo(bms):
                 warnings += ", "  
 
             warnings = warnings.rstrip(", ")
+            if len(warnings) > warning_state_max_len:
+                if debug_output > 0:
+                    ts_print(
+                        "Truncating warnings state for pack " + fmt_pack(p) +
+                        " from " + str(len(warnings)) + " chars to " + str(warning_state_max_len)
+                    )
+                if warning_state_max_len > 3:
+                    warnings = warnings[:warning_state_max_len-3] + "..."
+                else:
+                    warnings = warnings[:warning_state_max_len]
 
             client.publish(config['mqtt_base_topic'] + "/pack_" + fmt_pack(p) + "/warnings",warnings)
             if print_initial:
@@ -1425,7 +1442,7 @@ def bms_getWarnInfo(bms):
     except Exception as e:
         # Warning payloads can be short on some firmware revisions.
         # Skip that warning frame so telemetry keeps flowing for other data paths.
-        if "Truncated warning payload" in str(e):
+        if ("Truncated warning payload" in str(e)) or ("Unreasonable warning payload count" in str(e)):
             if debug_output > 0:
                 print("Skipping warning frame due to truncated payload: " + str(e))
             return True, True

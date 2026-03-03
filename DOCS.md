@@ -61,6 +61,11 @@ Treat unknown non-zero RTN codes as hard errors.
 Keep `false` for compatibility with devices that emit intermittent unmapped RTN values.
 Default: `false`
 
+### Option: `warning_state_max_len` (optional)
+Maximum length of the published warning sensor state string.
+Value is clamped to `16..255` to stay within Home Assistant sensor state limits.
+Default: `250`
+
 ### Option: `mqtt_ha_discovery_topic`
 Home Assistant MQTT discovery prefix topic.  
 Default: `homeassistant`
