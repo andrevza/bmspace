@@ -2,7 +2,7 @@ name: "BMS Pace - Development"
 description: "Pace BMS Interface"
 version: "3.dev"
 slug: "bms_pace_dev"
-url: "https://github.com/andrevza/bmspace/pace-bms-dev"
+url: "https://github.com/andrevza/bmspace/tree/main/pace-bms-dev"
 init: false
 host_network: false
 privileged: []
