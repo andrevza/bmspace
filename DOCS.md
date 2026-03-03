@@ -66,6 +66,16 @@ Maximum length of the published warning sensor state string.
 Value is clamped to `16..255` to stay within Home Assistant sensor state limits.
 Default: `250`
 
+### Option: `log_periodic_info` (optional)
+Enable recurring informational logs (for example hourly discovery republish and heartbeat logs).
+Errors and warnings are logged regardless of this setting.
+Default: `false`
+
+### Option: `heartbeat_log_interval_min` (optional)
+Heartbeat log interval in minutes when `log_periodic_info` is enabled.
+Set `0` to disable heartbeat logging.
+Default: `60`
+
 ### Option: `mqtt_ha_discovery_topic`
 Home Assistant MQTT discovery prefix topic.  
 Default: `homeassistant`

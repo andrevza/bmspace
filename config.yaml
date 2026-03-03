@@ -47,6 +47,8 @@ schema:
   mqtt_discovery_cleanup_startup: "bool?"
   strict_unknown_rtn: "bool?"
   warning_state_max_len: "int?"
+  log_periodic_info: "bool?"
+  heartbeat_log_interval_min: "int?"
   bms_connect_retries: "int?"
   bms_connect_retry_delay: "int?"
   force_pack_offset: "int?"

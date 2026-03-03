@@ -95,6 +95,10 @@ warning_state_max_len = min(255, max(16, int(config.get('warning_state_max_len',
 strict_unknown_rtn = bool(config.get('strict_unknown_rtn', False))
 # Cleanup stale retained discovery config topics once at startup.
 mqtt_discovery_cleanup_startup = bool(config.get('mqtt_discovery_cleanup_startup', True))
+# Toggle recurring informational logs (heartbeat/hourly discovery), while errors remain always logged.
+log_periodic_info = bool(config.get('log_periodic_info', False))
+# Heartbeat interval in minutes; 0 disables heartbeat log entries.
+heartbeat_log_interval_min = max(0, int(config.get('heartbeat_log_interval_min', 60)))
 code_running = True
 bms_connected = False
 mqtt_connected = False
@@ -104,7 +108,9 @@ print_initial = True
 debug_output = config['debug_output']
 disc_payload = {}
 repub_discovery = 0
+discovery_republish_pending = False
 discovery_cleanup_done = False
+last_heartbeat_monotonic = time.monotonic()
 
 bms_version = ''
 bms_sn = ''
@@ -430,7 +436,7 @@ def cleanup_discovery_topics_once():
         discovery_cleanup_done = True
 
 
-def ha_discovery(dry_run=False):
+def ha_discovery(dry_run=False, log_publish=True):
     global ha_discovery_enabled
     global packs
     global cells_per_pack
@@ -439,7 +445,7 @@ def ha_discovery(dry_run=False):
 
     if ha_discovery_enabled:
         
-        if not dry_run:
+        if (not dry_run) and log_publish:
             ts_print("Publishing HA Discovery topic...")
         current_discovery_topics = set()
 
@@ -687,7 +693,8 @@ def ha_discovery(dry_run=False):
             retain=True
         )
 
-        ts_print("Finished - Publishing HA Discovery topic")
+        if log_publish:
+            ts_print("Finished - Publishing HA Discovery topic")
 
     else:
         print("HA Discovery Disabled")
@@ -1505,14 +1512,29 @@ while code_running == True:
             # and we avoid creating incomplete entities when multi-pack parsing fails in that cycle.
             if print_initial and analog_success:
                 cleanup_discovery_topics_once()
-                ha_discovery()
+                ha_discovery(log_publish=True)
+
+            # Hourly discovery refresh should not re-enable startup-only prints.
+            if discovery_republish_pending and analog_success:
+                ha_discovery(log_publish=log_periodic_info)
+                discovery_republish_pending = False
+
+            if log_periodic_info and (heartbeat_log_interval_min > 0):
+                now_mono = time.monotonic()
+                heartbeat_interval_seconds = heartbeat_log_interval_min * 60
+                if now_mono - last_heartbeat_monotonic >= heartbeat_interval_seconds:
+                    ts_print(
+                        "Heartbeat: app alive, bms_connected="
+                        + str(bms_connected) + ", mqtt_connected=" + str(mqtt_connected)
+                    )
+                    last_heartbeat_monotonic = now_mono
                 
             client.publish(config['mqtt_base_topic'] + "/availability","online")
             print_initial = False
             repub_discovery += 1
             if repub_discovery*scan_interval > 3600:
                 repub_discovery = 0
-                print_initial = True
+                discovery_republish_pending = True
         
         else: #MQTT not connected
             client.loop_stop()
