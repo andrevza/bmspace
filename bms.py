@@ -88,6 +88,8 @@ if not mqtt_client_id:
     mqtt_client_id = "bmspace-" + platform.node().strip().replace(" ", "-")
 # Optional pack-count cap; 0 means auto-detect/use payload count.
 packs_to_read = max(0, int(config.get('packs_to_read', 0)))
+# If true, fail on unknown non-zero RTN codes. Default false for compatibility with noisy/variant devices.
+strict_unknown_rtn = bool(config.get('strict_unknown_rtn', False))
 # Cleanup stale retained discovery config topics once at startup.
 mqtt_discovery_cleanup_startup = bool(config.get('mqtt_discovery_cleanup_startup', True))
 code_running = True
@@ -739,12 +741,16 @@ def cid2_rtn(rtn):
     elif rtn == b'09':
         return True, "RTN Error 09: Operation or write error"
     else:
-        # Any non-00 RTN not explicitly mapped should still be treated as an error.
+        # Some firmware variants can emit unknown non-zero RTN values intermittently.
+        # Keep strict mode available, but default to warning to avoid false hard-fail loops.
         if rtn != b'00':
             try:
-                return True, "RTN Error " + rtn.decode("ascii") + ": Unmapped RTN code"
+                msg = "RTN " + rtn.decode("ascii") + ": Unmapped RTN code"
             except Exception:
-                return True, "RTN Error: Unmapped RTN code"
+                msg = "RTN: Unmapped RTN code"
+            if strict_unknown_rtn:
+                return True, "RTN Error " + msg
+            return False, "RTN Warning " + msg
         return False, False
 
 def bms_parse_data(inc_data):
@@ -768,6 +774,8 @@ def bms_parse_data(inc_data):
         if error:
             print(info)
             raise Exception(info)
+        elif info and debug_output > 0:
+            ts_print(info)
         
         LCHKSUM = inc_data[9]
 
@@ -914,6 +922,7 @@ def bms_request(bms, ver=b"\x32\x35",adr=b"\x30\x31",cid1=b"\x34\x36",cid2=b"\x4
     inc_data = bms_get_data(bms)
 
     if inc_data == False:
+        bms_connected = False
         log_error("retrieving data from BMS")
         return(False,"Error retrieving data from BMS")
 

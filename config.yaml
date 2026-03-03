@@ -45,6 +45,7 @@ schema:
   scan_interval: "int"
   debug_output: "int"
   mqtt_discovery_cleanup_startup: "bool?"
+  strict_unknown_rtn: "bool?"
   bms_connect_retries: "int?"
   bms_connect_retry_delay: "int?"
   force_pack_offset: "int?"

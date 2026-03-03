@@ -56,6 +56,11 @@ Remove stale retained MQTT discovery config topics once at startup.
 Keep enabled to clean up entities that no longer exist after topic/entity changes.
 Default: `true`
 
+### Option: `strict_unknown_rtn` (optional)
+Treat unknown non-zero RTN codes as hard errors.
+Keep `false` for compatibility with devices that emit intermittent unmapped RTN values.
+Default: `false`
+
 ### Option: `mqtt_ha_discovery_topic`
 Home Assistant MQTT discovery prefix topic.  
 Default: `homeassistant`
