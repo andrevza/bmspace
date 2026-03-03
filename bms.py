@@ -52,8 +52,13 @@ else:
     sys.exit("No config file found")  
 
 
-scan_interval = config['scan_interval']
+scan_interval = max(1, int(config.get('scan_interval', 5)))
 script_version = os.getenv("SUPERVISOR_ADDON_VERSION", os.getenv("ADDON_VERSION", "dev"))
+mqtt_host = str(config.get('mqtt_host', '')).strip()
+try:
+    mqtt_port = int(config.get('mqtt_port', 0))
+except (TypeError, ValueError):
+    mqtt_port = 0
 connection_type = config.get('connection_type', 'IP')
 bms_ip = str(config.get('bms_ip', '')).strip()
 bms_serial = str(config.get('bms_serial', '')).strip()
@@ -73,7 +78,12 @@ elif connection_type == "Serial":
 else:
     sys.exit("Configuration error: connection_type must be 'IP' or 'Serial'")
 
-ha_discovery_enabled = config['mqtt_ha_discovery']
+if len(mqtt_host) == 0:
+    sys.exit("Configuration error: mqtt_host is required")
+if mqtt_port <= 0:
+    sys.exit("Configuration error: mqtt_port is required and must be a valid port")
+
+ha_discovery_enabled = bool(config.get('mqtt_ha_discovery', True))
 # Optional tuning knob for installations where packet layout drifts between packs.
 # Default 0 keeps existing behavior.
 bms_force_pack_offset = int(config.get('force_pack_offset', 0))
@@ -86,6 +96,14 @@ bms_connect_retry_delay = max(1, int(config.get('bms_connect_retry_delay', 5)))
 mqtt_client_id = str(config.get('mqtt_client_id', '')).strip()
 if not mqtt_client_id:
     mqtt_client_id = "bmspace-" + platform.node().strip().replace(" ", "-")
+# Optional topic roots with safe defaults if omitted.
+mqtt_ha_discovery_topic = str(config.get('mqtt_ha_discovery_topic', 'homeassistant')).strip() or "homeassistant"
+mqtt_base_topic = str(config.get('mqtt_base_topic', 'bmspace')).strip() or "bmspace"
+# Persist normalized values so all existing config[...] usages keep working.
+config['mqtt_ha_discovery_topic'] = mqtt_ha_discovery_topic
+config['mqtt_base_topic'] = mqtt_base_topic
+config['mqtt_host'] = mqtt_host
+config['mqtt_port'] = mqtt_port
 # Optional pack-count cap; 0 means auto-detect/use payload count.
 packs_to_read = max(0, int(config.get('packs_to_read', 0)))
 # Keep warning sensor state within Home Assistant max state length constraints.
@@ -105,7 +123,7 @@ mqtt_connected = False
 bms = None
 shutdown_started = False
 print_initial = True
-debug_output = config['debug_output']
+debug_output = max(0, int(config.get('debug_output', 0)))
 disc_payload = {}
 repub_discovery = 0
 discovery_republish_pending = False
