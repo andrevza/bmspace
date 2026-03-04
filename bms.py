@@ -1710,6 +1710,7 @@ while code_running == True:
                     ts_print(
                         "Heartbeat: app alive, bms_connected="
                         + str(bms_connected) + ", mqtt_connected=" + str(mqtt_connected)
+                        + ", packs=" + str(packs)
                     )
                     last_heartbeat_monotonic = now_mono
                 
