@@ -500,6 +500,12 @@ def ha_discovery(dry_run=False, log_publish=True):
         for p in range (1,packs+1):
             # Core telemetry entities remain regular sensors.
             disc_payload.pop('entity_category', None)
+            # Prevent cross-entity field leakage when reusing a shared discovery payload dict.
+            disc_payload.pop('payload_on', None)
+            disc_payload.pop('payload_off', None)
+            disc_payload.pop('unit_of_measurement', None)
+            disc_payload.pop('device_class', None)
+            disc_payload.pop('state_class', None)
 
             # Use actual cell count for this pack when available.
             pack_cells = int(cells_per_pack.get(p, cells))
