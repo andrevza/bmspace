@@ -1703,7 +1703,7 @@ while code_running == True:
                 ha_discovery(log_publish=log_periodic_info)
                 discovery_republish_pending = False
 
-            if log_periodic_info and (heartbeat_log_interval_min > 0):
+            if heartbeat_log_interval_min > 0:
                 now_mono = time.monotonic()
                 heartbeat_interval_seconds = heartbeat_log_interval_min * 60
                 if now_mono - last_heartbeat_monotonic >= heartbeat_interval_seconds:
