@@ -544,30 +544,40 @@ def ha_discovery(dry_run=False, log_publish=True):
             disc_payload['unique_id'] = "bmspace_" + bms_sn + "_pack_" + fmt_pack(p) + "_i_remain_cap"
             disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_" + fmt_pack(p) + "/i_remain_cap"
             disc_payload['unit_of_measurement'] = "mAh"
+            disc_payload.pop('device_class', None)
+            disc_payload['state_class'] = "measurement"
             publish_discovery(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
 
             disc_payload['name'] = "Pack " + fmt_pack(p) + " State of Health"
             disc_payload['unique_id'] = "bmspace_" + bms_sn + "_pack_" + fmt_pack(p) + "_soh"
             disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_" + fmt_pack(p) + "/soh"
             disc_payload['unit_of_measurement'] = "%"
+            disc_payload.pop('device_class', None)
+            disc_payload['state_class'] = "measurement"
             publish_discovery(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
 
             disc_payload['name'] = "Pack " + fmt_pack(p) + " Cycles"
             disc_payload['unique_id'] = "bmspace_" + bms_sn + "_pack_" + fmt_pack(p) + "_cycles"
             disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_" + fmt_pack(p) + "/cycles"
             disc_payload['unit_of_measurement'] = ""
+            disc_payload.pop('device_class', None)
+            disc_payload['state_class'] = "measurement"
             publish_discovery(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
 
             disc_payload['name'] = "Pack " + fmt_pack(p) + " Full Capacity"
             disc_payload['unique_id'] = "bmspace_" + bms_sn + "_pack_" + fmt_pack(p) + "_i_full_cap"
             disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_" + fmt_pack(p) + "/i_full_cap"
             disc_payload['unit_of_measurement'] = "mAh"
+            disc_payload.pop('device_class', None)
+            disc_payload['state_class'] = "measurement"
             publish_discovery(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
 
             disc_payload['name'] = "Pack " + fmt_pack(p) + " Design Capacity"
             disc_payload['unique_id'] = "bmspace_" + bms_sn + "_pack_" + fmt_pack(p) + "_i_design_cap"
             disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_" + fmt_pack(p) + "/i_design_cap"
             disc_payload['unit_of_measurement'] = "mAh"
+            disc_payload.pop('device_class', None)
+            disc_payload['state_class'] = "measurement"
             publish_discovery(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
 
             disc_payload['name'] = "Pack " + fmt_pack(p) + " State of Charge"
@@ -810,18 +820,21 @@ def ha_discovery(dry_run=False, log_publish=True):
         disc_payload['unique_id'] = "bmspace_" + bms_sn + "_pack_i_remain_cap"
         disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_remain_cap"
         disc_payload['unit_of_measurement'] = "mAh"
+        disc_payload['state_class'] = "measurement"
         publish_discovery(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
 
         disc_payload['name'] = "Pack Full Capacity"
         disc_payload['unique_id'] = "bmspace_" + bms_sn + "_pack_i_full_cap"
         disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_full_cap"
         disc_payload['unit_of_measurement'] = "mAh"
+        disc_payload['state_class'] = "measurement"
         publish_discovery(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
 
         disc_payload['name'] = "Pack Design Capacity"
         disc_payload['unique_id'] = "bmspace_" + bms_sn + "_pack_i_design_cap"
         disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_design_cap"
         disc_payload['unit_of_measurement'] = "mAh"
+        disc_payload['state_class'] = "measurement"
         publish_discovery(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
 
         disc_payload['name'] = "Pack State of Charge"
@@ -836,6 +849,8 @@ def ha_discovery(dry_run=False, log_publish=True):
         disc_payload['unique_id'] = "bmspace_" + bms_sn + "_pack_soh"
         disc_payload['state_topic'] = config['mqtt_base_topic'] + "/pack_soh"
         disc_payload['unit_of_measurement'] = "%"
+        disc_payload.pop('device_class', None)
+        disc_payload['state_class'] = "measurement"
         publish_discovery(config['mqtt_ha_discovery_topic']+"/sensor/BMS-" + bms_sn + "/" + disc_payload['name'].replace(' ', '_') + "/config",json.dumps(disc_payload),qos=0, retain=True)
 
         # Runtime/build metadata for troubleshooting and release validation.
