@@ -1,5 +1,16 @@
 # Changelog
 
+## v3.1.0
+- Added richer Home Assistant diagnostics by publishing per-pack warning/protection bitfields as dedicated binary sensors (including low power warning and expanded Protection State 2 flags).
+- Improved MQTT discovery metadata by applying `device_class`/`state_class` to core telemetry (voltage/current/temperature/SOC) and correcting metadata carry-over issues that could invalidate non-voltage entities.
+- Added safer discovery payload handling to prevent reused fields (`device_class`, `payload_on/off`, etc.) leaking between entity definitions.
+- Improved runtime observability with heartbeat logging updates, including pack count in heartbeat output.
+- Added periodic logging controls and refined discovery republish logging behavior to reduce log noise while preserving useful lifecycle visibility.
+- Strengthened config handling with fail-fast validation for required MQTT settings and mode-aware BMS transport validation.
+- Made optional config defaults more resilient (topic defaults, scan/debug defaults, bounded debug level handling with fallback logging).
+- Added UI-friendly option labels via `translations/en.json` to improve App configuration readability.
+- Updated Docker base images to Python `3.12-alpine` for both main and development variants.
+
 ## v3.0.1
 - Improved parser resilience for short/incomplete BMS frames: analog parsing now keeps already-parsed packs when later pack data is truncated, and warning parsing skips truncated warning frames instead of failing the cycle.
 - Added timestamped lifecycle and discovery logs (startup, shutdown request, HA discovery start/finish) using Python logging.
