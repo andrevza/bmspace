@@ -1,0 +1,76 @@
+configuration:
+  mqtt_host:
+    name: MQTT host
+    description: Hostname or IP address of your MQTT broker.
+  mqtt_port:
+    name: MQTT port
+    description: TCP port of your MQTT broker (usually 1883).
+  mqtt_client_id:
+    name: MQTT client ID
+    description: Optional explicit client ID. Leave empty for auto-generated value.
+  mqtt_user:
+    name: MQTT username
+    description: MQTT username used by this app.
+  mqtt_password:
+    name: MQTT password
+    description: MQTT password used by this app.
+  mqtt_ha_discovery:
+    name: Enable Home Assistant discovery
+    description: Publish MQTT discovery entities for Home Assistant.
+  mqtt_ha_discovery_topic:
+    name: Home Assistant discovery topic
+    description: Discovery prefix topic, usually homeassistant.
+  mqtt_base_topic:
+    name: MQTT base topic
+    description: Root topic used for telemetry and availability.
+  connection_type:
+    name: Connection type
+    description: Select IP for TCP bridge or Serial for direct serial access.
+  bms_ip:
+    name: BMS IP address
+    description: IP address of the BMS bridge when using IP mode.
+  bms_port:
+    name: BMS TCP port
+    description: TCP port of the BMS bridge when using IP mode.
+  bms_serial:
+    name: BMS serial device
+    description: Serial device path when using Serial mode (for example /dev/ttyUSB0).
+  scan_interval:
+    name: Scan interval
+    description: Poll interval in seconds between telemetry cycles.
+  debug_output:
+    name: Debug output level
+    description: 0=minimal, 1=useful debug, 2/3=protocol-level verbose logs.
+  mqtt_discovery_cleanup_startup:
+    name: Cleanup stale discovery topics on startup
+    description: Remove retained discovery topics that no longer belong to active entities.
+  strict_unknown_rtn:
+    name: Strict unknown RTN handling
+    description: Treat unknown non-zero RTN response codes as hard errors.
+  warning_state_max_len:
+    name: Maximum warning state length
+    description: Maximum warning text length published to MQTT (clamped to Home Assistant limits).
+  log_periodic_info:
+    name: Enable periodic info logs
+    description: Enable periodic informational logs such as hourly discovery republish messages.
+  heartbeat_log_interval_min:
+    name: Heartbeat log interval
+    description: Minutes between heartbeat log entries (0 disables heartbeat logging).
+  bms_connect_retries:
+    name: BMS connect retries
+    description: Number of retries when connecting/reconnecting to the BMS.
+  bms_connect_retry_delay:
+    name: BMS retry delay
+    description: Delay in seconds between BMS connection retries.
+  force_pack_offset:
+    name: Force pack offset
+    description: Manual offset tuning for multi-pack analog payload alignment.
+  packs_to_read:
+    name: Packs to read
+    description: Maximum packs to parse and publish each cycle (0 means auto/all).
+  zero_pad_number_cells:
+    name: Zero-pad cell numbers
+    description: Pad cell numbers in topics/entity IDs (for example 01, 02, ...).
+  zero_pad_number_packs:
+    name: Zero-pad pack numbers
+    description: Pad pack numbers in topics/entity IDs (for example 01, 02, ...).
