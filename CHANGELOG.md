@@ -1,5 +1,10 @@
 # Changelog
 
+## v3.1.1
+- Hardened reconnect recovery by clearing stale TCP frame state before reconnects, closing the previous BMS transport, and forcing a fresh reconnect after invalid analog or warning payloads.
+- Added configurable payload sanity guardrails via optional `max_pack_count`, `max_cells_per_pack`, and `max_temps_per_pack` settings to reject obviously corrupted multi-pack data while allowing larger installations to raise the limits.
+- Changed the default runtime pack count from `1` to `0` so unhealthy or uninitialized states no longer look like a valid single-pack system.
+
 ## v3.1.0
 - Added richer Home Assistant diagnostics by publishing per-pack warning/protection bitfields as dedicated binary sensors (including low power warning and expanded Protection State 2 flags).
 - Improved MQTT discovery metadata by applying `device_class`/`state_class` to core telemetry (voltage/current/temperature/SOC) and correcting metadata carry-over issues that could invalidate non-voltage entities.

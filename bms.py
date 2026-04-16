@@ -106,6 +106,11 @@ config['mqtt_host'] = mqtt_host
 config['mqtt_port'] = mqtt_port
 # Optional pack-count cap; 0 means auto-detect/use payload count.
 packs_to_read = max(0, int(config.get('packs_to_read', 0)))
+# Parser sanity ceilings. These are operational guardrails rather than protocol field limits,
+# and can be raised for larger systems via config.
+max_pack_count = max(1, int(config.get('max_pack_count', 16)))
+max_cells_per_pack = max(1, int(config.get('max_cells_per_pack', 32)))
+max_temps_per_pack = max(0, int(config.get('max_temps_per_pack', 16)))
 # Keep warning sensor state within Home Assistant max state length constraints.
 # HA sensor state max length is 255, so clamp user config into a safe range.
 warning_state_max_len = min(255, max(16, int(config.get('warning_state_max_len', 250))))
@@ -142,7 +147,7 @@ last_heartbeat_monotonic = time.monotonic()
 bms_version = ''
 bms_sn = ''
 pack_sn = ''
-packs = 1
+packs = 0
 cells = 13
 temps = 6
 cells_per_pack = {}
@@ -265,6 +270,21 @@ atexit.register(exit_handler)
 signal.signal(signal.SIGTERM, handle_shutdown_signal)
 signal.signal(signal.SIGINT, handle_shutdown_signal)
 
+def reset_bms_transport_state():
+    global tcp_rx_buffer
+    tcp_rx_buffer = b""
+
+def close_bms_connection():
+    global bms
+    global bms_connected
+    if bms:
+        try:
+            bms.close()
+        except Exception as e:
+            log_error("closing BMS connection: " + str(e))
+    bms = None
+    bms_connected = False
+
 def bms_connect(address, port):
 
     if connection_type == "Serial":
@@ -299,6 +319,7 @@ def bms_connect_with_retries(address, port, max_attempts=None, retry_delay=None)
         retry_delay = bms_connect_retry_delay
 
     for attempt in range(1, max_attempts + 1):
+        reset_bms_transport_state()
         bms, connected = bms_connect(address, port)
         if connected:
             return bms, True
@@ -1241,6 +1262,8 @@ def bms_getAnalogData(bms,batNumber):
             return int(raw,16)
 
         payload_packs = read_hex(2, "packs")
+        if payload_packs < 1 or payload_packs > max_pack_count:
+            raise ValueError("Unreasonable analog payload pack count: " + str(payload_packs))
         packs = payload_packs
         if packs_to_read > 0:
             packs = min(payload_packs, packs_to_read)
@@ -1261,6 +1284,8 @@ def bms_getAnalogData(bms,batNumber):
                 # Each pack block starts with its cell-count marker.
                 # We read this marker first, then parse that many cell voltages.
                 cells = read_hex(2, "pack " + fmt_pack(p) + " cell count")
+                if cells < 1 or cells > max_cells_per_pack:
+                    raise ValueError("Unreasonable analog payload cell count for pack " + fmt_pack(p) + ": " + str(cells))
                 next_cells_per_pack[p] = cells
 
                 if print_initial:
@@ -1292,6 +1317,8 @@ def bms_getAnalogData(bms,batNumber):
                     print("Pack " + fmt_pack(p) +", Cell Max Diff Volt Calc: " + str(cell_max_diff_volt) + " mV")
 
                 temps = read_hex(2, "pack " + fmt_pack(p) + " temperature count")
+                if temps < 0 or temps > max_temps_per_pack:
+                    raise ValueError("Unreasonable analog payload temperature count for pack " + fmt_pack(p) + ": " + str(temps))
                 if print_initial:
                     print("Pack " + fmt_pack(p) + ", Total temperature sensors: " + str(temps))
 
@@ -1484,6 +1511,8 @@ def bms_getWarnInfo(bms):
             return constants.warningStates.get(code, "state 0x" + code.decode("ascii"))
 
         payload_packsW = int(read_token(2, "packs"),16)
+        if payload_packsW < 1 or payload_packsW > max_pack_count:
+            raise ValueError("Unreasonable warning payload pack count: " + str(payload_packsW))
         packsW = payload_packsW
         if packs_to_read > 0:
             packsW = min(payload_packsW, packs_to_read)
@@ -1498,7 +1527,7 @@ def bms_getWarnInfo(bms):
         for p in range(1,packsW+1):
 
             cellsW = int(read_token(2, "pack " + fmt_pack(p) + " cell count"),16)
-            if (cellsW < 1) or (cellsW > 64):
+            if (cellsW < 1) or (cellsW > max_cells_per_pack):
                 raise ValueError("Unreasonable warning payload count: cellsW=" + str(cellsW))
 
             for c in range(1,cellsW+1):
@@ -1508,7 +1537,7 @@ def bms_getWarnInfo(bms):
                     warnings += "cell " + str(c) + " " + warn + ", "
 
             tempsW = int(read_token(2, "pack " + fmt_pack(p) + " temp count"),16)
-            if (tempsW < 0) or (tempsW > 64):
+            if (tempsW < 0) or (tempsW > max_temps_per_pack):
                 raise ValueError("Unreasonable warning payload count: tempsW=" + str(tempsW))
         
             for t in range(1,tempsW+1):
@@ -1703,6 +1732,7 @@ while code_running == True:
             analog_success, data = bms_getAnalogData(bms,batNumber=255)
             if analog_success != True:
                 log_error("Retrieving BMS analog data: " + data)
+                bms_connected = False
             time.sleep(scan_interval/3)
             success, data = bms_getPackCapacity(bms)
             if success != True:
@@ -1711,6 +1741,7 @@ while code_running == True:
             success, data = bms_getWarnInfo(bms)
             if success != True:
                 log_error("Retrieving BMS warning info: " + data)
+                bms_connected = False
             time.sleep(scan_interval/3)
 
             # Only publish discovery after a valid analog frame, so HA entities match real pack/cell data
@@ -1751,6 +1782,7 @@ while code_running == True:
             print_initial = True
     else: #BMS not connected
         ts_print("BMS disconnected, trying to reconnect...")
+        close_bms_connection()
         bms,bms_connected = bms_connect_with_retries(bms_ip,bms_port)
         if bms_connected != True:
             sys.exit("Unable to reconnect to BMS after retries, exiting")

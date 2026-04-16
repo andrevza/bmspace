@@ -1,6 +1,6 @@
 name: "BMS Pace"
 description: "Pace BMS Interface"
-version: "3.1.0"
+version: "3.1.1"
 slug: "bms_pace"
 url: "https://github.com/andrevza/bmspace"
 init: false
@@ -48,5 +48,8 @@ schema:
   bms_connect_retry_delay: "int?"
   force_pack_offset: "int?"
   packs_to_read: "int?"
+  max_pack_count: "int?"
+  max_cells_per_pack: "int?"
+  max_temps_per_pack: "int?"
   zero_pad_number_cells: "int?"
   zero_pad_number_packs: "int?"

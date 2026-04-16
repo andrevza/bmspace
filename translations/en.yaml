@@ -68,6 +68,15 @@ configuration:
   packs_to_read:
     name: Packs to read
     description: Maximum packs to parse and publish each cycle (0 means auto/all).
+  max_pack_count:
+    name: Maximum pack count
+    description: Optional sanity ceiling for accepted pack count values; raise this only for larger real systems.
+  max_cells_per_pack:
+    name: Maximum cells per pack
+    description: Optional sanity ceiling for accepted cell count values per pack; raise this only if your packs genuinely have more cells.
+  max_temps_per_pack:
+    name: Maximum temperature sensors per pack
+    description: Optional sanity ceiling for accepted temperature sensor counts per pack; raise this only if your packs genuinely have more sensors.
   zero_pad_number_cells:
     name: Zero-pad cell numbers
     description: Pad cell numbers in topics/entity IDs (for example 01, 02, ...).

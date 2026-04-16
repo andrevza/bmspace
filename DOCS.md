@@ -138,6 +138,21 @@ Cap number of packs parsed/published each cycle.
 Use `0` for auto-detect/full payload.
 Default when omitted: `0`
 
+### Option: `max_pack_count` (optional)
+Sanity ceiling for the number of packs accepted from BMS payloads.
+Raise this only if your installation legitimately has more than `16` packs.
+Default when omitted: `16`
+
+### Option: `max_cells_per_pack` (optional)
+Sanity ceiling for the number of cells accepted per pack from BMS payloads.
+Raise this only if your hardware legitimately reports more than `32` cells in a pack.
+Default when omitted: `32`
+
+### Option: `max_temps_per_pack` (optional)
+Sanity ceiling for the number of temperature sensors accepted per pack from BMS payloads.
+Raise this only if your hardware legitimately reports more than `16` temperature sensors in a pack.
+Default when omitted: `16`
+
 ### Option: `zero_pad_number_cells` (optional)
 Zero-padding width for cell numbers in MQTT topic/entity IDs.
 Example: `2` makes `cell_1` become `cell_01`.
