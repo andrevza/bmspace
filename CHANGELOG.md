@@ -1,5 +1,8 @@
 # Changelog
 
+## v3.1.2
+- Fixed addon version reporting in Home Assistant local builds by embedding the packaged addon version into the image at build time and using it as the runtime fallback when Supervisor version environment variables are not present.
+
 ## v3.1.1
 - Hardened reconnect recovery by clearing stale TCP frame state before reconnects, closing the previous BMS transport, and forcing a fresh reconnect after invalid analog or warning payloads.
 - Added configurable payload sanity guardrails via optional `max_pack_count`, `max_cells_per_pack`, and `max_temps_per_pack` settings to reject obviously corrupted multi-pack data while allowing larger installations to raise the limits.

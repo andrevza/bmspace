@@ -26,6 +26,17 @@ def ts_print(message):
 def log_error(message):
     logger.error(str(message))
 
+def read_built_addon_version():
+    try:
+        with open('/workdir/addon_version.txt', 'r', encoding='utf-8') as f:
+            version = f.read().strip()
+            return version or None
+    except FileNotFoundError:
+        return None
+    except Exception as e:
+        log_error("reading built addon version: " + str(e))
+        return None
+
 config = {}
 
 if os.path.exists('/data/options.json'):
@@ -53,7 +64,12 @@ else:
 
 
 scan_interval = max(1, int(config.get('scan_interval', 5)))
-script_version = os.getenv("SUPERVISOR_ADDON_VERSION", os.getenv("ADDON_VERSION", "dev"))
+script_version = (
+    os.getenv("SUPERVISOR_ADDON_VERSION")
+    or os.getenv("ADDON_VERSION")
+    or read_built_addon_version()
+    or "dev"
+)
 mqtt_host = str(config.get('mqtt_host', '')).strip()
 try:
     mqtt_port = int(config.get('mqtt_port', 0))
