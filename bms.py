@@ -47,7 +47,7 @@ if os.path.exists('/data/options.json'):
         for secret_key in ("mqtt_password",):
             if secret_key in safe_config:
                 safe_config[secret_key] = "***"
-        print("Config: " + json.dumps(safe_config))
+        ts_print("Config: " + json.dumps(safe_config))
 
 elif os.path.exists('config.yaml'):
     ts_print("Loading config.yaml")
@@ -57,7 +57,7 @@ elif os.path.exists('config.yaml'):
         for secret_key in ("mqtt_password",):
             if secret_key in safe_config:
                 safe_config[secret_key] = "***"
-        print("Config: " + json.dumps(safe_config))
+        ts_print("Config: " + json.dumps(safe_config))
         
 else:
     sys.exit("No config file found")  
@@ -356,7 +356,7 @@ def bms_sendData(comms,request=''):
                 time.sleep(0.25)
                 return True
         except IOError as e:
-            print("BMS serial error: %s" % e)
+            log_error("BMS serial error: %s" % e)
             # global bms_connected
             return False
 
@@ -921,7 +921,7 @@ def ha_discovery(dry_run=False, log_publish=True):
             ts_print("Finished - Publishing HA Discovery topic")
 
     else:
-        print("HA Discovery Disabled")
+        ts_print("HA Discovery Disabled")
         return set()
 
 def chksum_calc(data):
@@ -1150,14 +1150,14 @@ def bms_request(bms, ver=b"\x32\x35",adr=b"\x30\x31",cid1=b"\x34\x36",cid2=b"\x4
 
     if not bms_sendData(bms,request):
         bms_connected = False
-        log_error("connection to BMS lost")
+        log_error("Connection to BMS lost")
         return(False,"Error, connection to BMS lost")
 
     inc_data = bms_get_data(bms)
 
     if inc_data == False:
         bms_connected = False
-        log_error("retrieving data from BMS")
+        log_error("Error retrieving data from BMS")
         return(False,"Error retrieving data from BMS")
 
     if debug_output > 2:
