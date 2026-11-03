@@ -6,6 +6,7 @@ contains startup/runtime loop side effects at module level.
 
 import ast
 import json
+import logging
 import pathlib
 import socket
 import time as pytime
@@ -21,10 +22,14 @@ def load_bms_namespace(function_names):
     """Compile only selected function defs from bms.py into an isolated namespace."""
     source = BMS_PATH.read_text()
     tree = ast.parse(source)
+    # These helpers are dependencies of several isolated functions below. Keep
+    # the AST-loaded namespace aligned with the helpers used by production code.
+    required_helpers = {"ts_print", "reset_bms_transport_state"}
     selected = [
         node
         for node in tree.body
-        if isinstance(node, ast.FunctionDef) and node.name in function_names
+        if isinstance(node, ast.FunctionDef)
+        and node.name in function_names | required_helpers
     ]
     module = ast.Module(body=selected, type_ignores=[])
     code = compile(module, str(BMS_PATH), "exec")
@@ -35,6 +40,14 @@ def load_bms_namespace(function_names):
         "debug_output": 0,
         "connection_type": "IP",
         "tcp_rx_buffer": b"",
+        "logger": logging.getLogger("bmspace.tests"),
+        "packs_to_read": 0,
+        "max_pack_count": 16,
+        "max_cells_per_pack": 32,
+        "max_temps_per_pack": 16,
+        "warning_state_max_len": 250,
+        "cells_per_pack": {},
+        "discovery_meta_topic": "bmspace/_meta/discovery_topics",
     }
     exec(code, ns)
     return ns
@@ -396,7 +409,7 @@ class TestPackCapacityAndWarnings(unittest.TestCase):
             warnState2={i: f"w2_{i}" for i in range(1, 9)},
         )
 
-        info = ("00" + "01" + "00" + "00" + ("00" * 12)).encode("ascii")
+        info = ("00" + "01" + "01" + "00" + "00" + ("00" * 12)).encode("ascii")
         ns["bms_request"] = lambda *_a, **_k: (True, info)
 
         ok, result = ns["bms_getWarnInfo"](object())
@@ -433,6 +446,8 @@ class TestDiscoveryAggregateEntities(unittest.TestCase):
         aggregate_states = []
         for (_topic, payload, _k) in ns["client"].published:
             obj = json.loads(payload)
+            if not isinstance(obj, dict):
+                continue
             st = obj.get("state_topic")
             if st in {
                 "bmspace/pack_remain_cap",
