@@ -35,7 +35,7 @@ If your ports look something like this, its likely a PACE BMS:
 
 ### 3.1 Manually
 Install the pre-requisites as per requirements.txt. Then edit the config.yaml file to suit your needs and run the script bms.py
-NB: Tested with Python 3.9. Should work on later version as well.
+The Docker images use Python 3.14 on Alpine Linux.
 
 ### 3.2 Home Assistant
 All configuration options are available from within Home Assistant.

@@ -8,6 +8,11 @@ This script excludes COMMANDS and should only retrieve data. Nonetheless the aut
 <h2>Development Version:</h2>
 For Volta Stage 1 - Adapted from BMS code base, many data disabled as mappings are completely different.
 
+<h2>v2.2.6-dev</h2>
+<ul>
+<li>Updated the development App container to Python 3.14 on Alpine Linux.</li>
+</ul>
+
 
 <h1>Known / possible issues</h1>
 The overall Pack data collected under the root MQTT topic seems to follow the data of the first battery in the Pack.
